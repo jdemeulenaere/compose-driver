@@ -1,0 +1,217 @@
+@file:OptIn(ExperimentalTestApi::class)
+
+package com.github.jdemeulenaere.compose.driver
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.printToString
+import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.test.waitUntilAtLeastOneExists
+import androidx.navigationevent.DirectNavigationEventInput
+import androidx.navigationevent.NavigationEventDispatcher
+import androidx.navigationevent.NavigationEventDispatcherOwner
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.install
+import io.ktor.server.engine.ApplicationEngineFactory
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
+import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.withContext
+
+fun startComposeDriverServer(
+    port: Int = 8080,
+    factory: ApplicationEngineFactory<*, *> = ApplicationEngineFactory,
+    additionalModuleConfiguration: suspend Application.() -> Unit = {},
+    content: @Composable () -> Unit,
+) {
+    val navigationEventDispatcher = NavigationEventDispatcher()
+    val navigationEventDispatcherOwner =
+        object : NavigationEventDispatcherOwner {
+            override val navigationEventDispatcher = navigationEventDispatcher
+        }
+
+    val runTestContext = StandardTestDispatcher()
+    runComposeUiTest(runTestContext = runTestContext, testTimeout = Duration.INFINITE) {
+        // Android tests don't allow calling setContent multiple times, so we use an increasing key
+        // to force recreate the content state when /reset is called.
+        var contentKey by mutableStateOf(0)
+        setContent {
+            key(contentKey) {
+                CompositionLocalProvider(
+                    LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
+                    content = content,
+                )
+            }
+        }
+
+        embeddedServer(factory, port = port) {
+                configureDriverModule(
+                    test = this@runComposeUiTest,
+                    runTestContext = runTestContext,
+                    navigationEventDispatcher = navigationEventDispatcher,
+                    onReset = {
+                        contentKey++
+                        waitForIdle()
+                    },
+                )
+
+                additionalModuleConfiguration()
+            }
+            .start()
+
+        awaitCancellation()
+    }
+}
+
+private fun Application.configureDriverModule(
+    test: ComposeUiTest,
+    runTestContext: CoroutineContext,
+    navigationEventDispatcher: NavigationEventDispatcher,
+    onReset: () -> Unit,
+) {
+    install(StatusPages) {
+        exception<IllegalArgumentException> { call, cause ->
+            call.respondText(
+                text = "Bad Request: ${cause.message}",
+                status = HttpStatusCode.BadRequest,
+            )
+        }
+        exception<Throwable> { call, cause ->
+            println("thread=${Thread.currentThread().name}")
+            cause.printStackTrace()
+            call.respondText(
+                text = "Server Error: ${cause.message}",
+                status = HttpStatusCode.InternalServerError,
+            )
+        }
+    }
+
+    suspend fun RoutingContext.onNode(
+        respondOk: Boolean = true,
+        f: suspend ComposeUiTest.(SemanticsNodeInteraction) -> Unit,
+    ) {
+        withContext(runTestContext) {
+            test.waitForIdle()
+            test.f(test.onNode(call.node()))
+            test.waitForIdle()
+            if (respondOk) {
+                ok()
+            }
+        }
+    }
+
+    // Use GET so that we can manually test the endpoint directly in the browser.
+    routing {
+        get("/status") { ok() }
+        get("/reset") {
+            withContext(runTestContext) { onReset() }
+            ok()
+        }
+        get("/screenshot") {
+            onNode(respondOk = false) { node -> call.respondImage(node.captureToImage()) }
+        }
+        get("/printTree") { onNode(respondOk = false) { call.respondText(it.printToString()) } }
+        get("/waitForIdle") { onNode {} }
+        get("/waitForNode") {
+            val timeout = call.optionalParam("timeout")?.toLong() ?: 5_000L
+            onNode { waitUntilAtLeastOneExists(call.node(), timeout) }
+        }
+        get("/click") { onNode { it.performClick() } }
+        get("/longClick") { onNode { it.performTouchInput { longClick() } } }
+        get("/doubleClick") { onNode { it.performTouchInput { doubleClick() } } }
+        get("/textInput") { onNode { it.performTextInput(call.requiredParam("text")) } }
+        get("/textReplacement") { onNode { it.performTextReplacement(call.requiredParam("text")) } }
+        get("/textClearance") { onNode { it.performTextClearance() } }
+        get("/navigateBack") {
+            onNode {
+                val input = DirectNavigationEventInput()
+                navigationEventDispatcher.addInput(input)
+                input.backCompleted()
+            }
+        }
+        get("/swipe") {
+            onNode { node ->
+                node.performTouchInput {
+                    when (call.direction()) {
+                        "UP" -> swipeUp()
+                        "DOWN" -> swipeDown()
+                        "LEFT" -> swipeLeft()
+                        "RIGHT" -> swipeRight()
+                        else ->
+                            throw IllegalArgumentException("Unknown direction: ${call.direction()}")
+                    }
+                }
+            }
+        }
+        get("/pointerInput/down") {
+            onNode { it.performTouchInput { down(call.pointerId(), center) } }
+        }
+        get("/pointerInput/moveBy") {
+            onNode { it.performTouchInput { moveBy(call.pointerId(), call.offset()) } }
+        }
+        get("/pointerInput/moveTo") {
+            onNode { it.performTouchInput { moveTo(call.pointerId(), call.offset()) } }
+        }
+        get("/pointerInput/up") { onNode { it.performTouchInput { up(call.pointerId()) } } }
+    }
+}
+
+private suspend fun RoutingContext.ok() {
+    call.respondText("ok")
+}
+
+private fun ApplicationCall.node(): SemanticsMatcher {
+    return optionalParam("tag")?.let { hasTestTag(it) } ?: isRoot()
+}
+
+private fun ApplicationCall.requiredParam(name: String): String {
+    return requireNotNull(request.queryParameters[name]) { "Missing '$name' parameter" }
+}
+
+private fun ApplicationCall.optionalParam(name: String): String? {
+    return request.queryParameters[name]
+}
+
+private fun ApplicationCall.direction(): String {
+    return requiredParam("direction").uppercase()
+}
+
+private fun ApplicationCall.offset(): Offset {
+    return Offset(requiredParam("x").toFloat(), requiredParam("y").toFloat())
+}
+
+private fun ApplicationCall.pointerId(): Int {
+    return optionalParam("pointerId")?.toInt() ?: 0
+}
