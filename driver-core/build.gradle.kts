@@ -25,7 +25,5 @@ kotlin {
                 implementation(libs.ktor.server.status.pages)
             }
         }
-
-        androidMain { }
     }
 }

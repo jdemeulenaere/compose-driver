@@ -19,8 +19,9 @@ internal fun encodeGif(
             Files.newOutputStream(dir.resolve(frameName)).use { writePng(image, it) }
         }
 
+        // Make the time between frames at least 20ms, otherwise browsers will slow down the GIF.
+        val framerate = 1_000.0 / timeBetweenFramesMs.coerceAtLeast(20L)
         val outputGif = dir.resolve("output.gif")
-        val framerate = 1_000.0 / timeBetweenFramesMs
         val cmd =
             listOf(
                 "ffmpeg",
@@ -43,6 +44,6 @@ internal fun encodeGif(
 
         Files.copy(outputGif, outputStream)
     } finally {
-        Files.delete(dir)
+        dir.toFile().deleteRecursively()
     }
 }

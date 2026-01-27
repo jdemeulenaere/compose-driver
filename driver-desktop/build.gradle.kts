@@ -17,4 +17,5 @@ dependencies {
 
 // These tasks fail with Compose Multiplatform 1.10.0, disable them for now.
 tasks.named("distTar").configure { enabled = false }
+
 tasks.named("distZip").configure { enabled = false }
