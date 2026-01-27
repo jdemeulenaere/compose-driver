@@ -1,25 +1,15 @@
 package com.github.jdemeulenaere.compose.driver
 
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.toAwtImage
 import io.ktor.http.ContentType
 import io.ktor.server.engine.ApplicationEngineFactory
 import io.ktor.server.netty.Netty
 import io.ktor.server.response.respondOutputStream
 import io.ktor.server.routing.RoutingCall
-import javax.imageio.ImageIO
+import java.io.OutputStream
 
 internal actual val ApplicationEngineFactory: ApplicationEngineFactory<*, *> = Netty
 
-internal actual suspend fun RoutingCall.respondImage(image: ImageBitmap) {
-    respondOutputStream(ContentType.Image.PNG) { ImageIO.write(image.toAwtImage(), "png", this) }
-}
-
-internal actual suspend fun RoutingCall.respondGif(
-    frames: List<ImageBitmap>,
-    timeBetweenFramesMs: Long,
-) {
-    respondOutputStream(ContentType.Image.GIF) {
-        generateGif(frames.map { it.toAwtImage() }, this, timeBetweenFramesMs)
-    }
-}
+internal actual suspend fun RoutingCall.respondStream(
+    contentType: ContentType,
+    producer: suspend OutputStream.() -> Unit,
+) = respondOutputStream(contentType, producer = producer)

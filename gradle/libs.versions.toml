@@ -1,7 +1,7 @@
 [versions]
 agp = "9.0.0"
 android-compileSdk = "36"
-android-minSdk = "24"
+android-minSdk = "26"
 androidx-activity = "1.12.2"
 composeMultiplatform = "1.10.0"
 junit = "4.13.2"

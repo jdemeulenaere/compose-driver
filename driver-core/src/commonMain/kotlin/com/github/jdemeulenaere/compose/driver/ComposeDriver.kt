@@ -35,6 +35,7 @@ import androidx.navigationevent.DirectNavigationEventInput
 import androidx.navigationevent.NavigationEventDispatcher
 import androidx.navigationevent.NavigationEventDispatcherOwner
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -139,7 +140,9 @@ private fun Application.configureDriverModule(
             ok()
         }
         get("/screenshot") {
-            onNode(autoRespondOkOrGif = false) { node -> call.respondImage(node.captureToImage()) }
+            onNode(autoRespondOkOrGif = false) { node ->
+                call.respondStream(ContentType.Image.PNG) { writePng(node.captureToImage(), this) }
+            }
         }
         get("/printTree") {
             onNode(autoRespondOkOrGif = false) { call.respondText(it.printToString()) }
@@ -234,7 +237,7 @@ private suspend fun RoutingContext.onNode(
 
     val timeBetweenFramesMs = 16L
     val frames = generateFrames(test, gifDurationMs, timeBetweenFramesMs, f)
-    call.respondGif(frames, timeBetweenFramesMs)
+    call.respondStream(ContentType.Image.GIF) { encodeGif(frames, timeBetweenFramesMs, this) }
 }
 
 private suspend fun RoutingContext.generateFrames(

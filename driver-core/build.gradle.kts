@@ -26,6 +26,6 @@ kotlin {
             }
         }
 
-        androidMain { dependencies { implementation(libs.gifencoder) } }
+        androidMain { }
     }
 }
