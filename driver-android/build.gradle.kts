@@ -33,6 +33,7 @@ dependencies {
     testImplementation(libs.compose.material3)
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.androidx.activity.compose)
+    testImplementation(libs.slf4j.simple)
     debugImplementation(libs.compose.ui.test.manifest)
 }
 

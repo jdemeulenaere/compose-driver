@@ -12,6 +12,7 @@ ktor = "3.4.0"
 navigationEvent = "1.0.1"
 robolectric = "4.16.1"
 jetbrainsKotlinJvm = "2.3.0"
+gifencoder = "0.10.1"
 
 [libraries]
 junit = { module = "junit:junit", version.ref = "junit" }
@@ -21,13 +22,13 @@ compose-ui-test-junit4 = { group = "org.jetbrains.compose.ui", name = "ui-test-j
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "composeMultiplatform" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
-
 ktor-server-call-logging = { group = "io.ktor", name = "ktor-server-call-logging", version.ref = "ktor" }
 ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor" }
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor" }
 ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages", version.ref = "ktor" }
 slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version = "2.0.9" }
 androidx-navigation-event = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "navigationEvent" }
+gifencoder = { module = "com.squareup:gifencoder", version.ref = "gifencoder" }
 
 [plugins]
 application = { id = "application" }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
@@ -119,16 +121,13 @@ private fun Application.configureDriverModule(
     }
 
     suspend fun RoutingContext.onNode(
-        respondOk: Boolean = true,
+        autoRespondOkOrGif: Boolean = true,
         f: suspend ComposeUiTest.(SemanticsNodeInteraction) -> Unit,
     ) {
         withContext(runTestContext) {
             test.waitForIdle()
-            test.f(test.onNode(call.node()))
+            onNode(test, autoRespondOkOrGif, f)
             test.waitForIdle()
-            if (respondOk) {
-                ok()
-            }
         }
     }
 
@@ -140,9 +139,11 @@ private fun Application.configureDriverModule(
             ok()
         }
         get("/screenshot") {
-            onNode(respondOk = false) { node -> call.respondImage(node.captureToImage()) }
+            onNode(autoRespondOkOrGif = false) { node -> call.respondImage(node.captureToImage()) }
         }
-        get("/printTree") { onNode(respondOk = false) { call.respondText(it.printToString()) } }
+        get("/printTree") {
+            onNode(autoRespondOkOrGif = false) { call.respondText(it.printToString()) }
+        }
         get("/waitForIdle") { onNode {} }
         get("/waitForNode") {
             val timeout = call.optionalParam("timeout")?.toLong() ?: 5_000L
@@ -214,4 +215,54 @@ private fun ApplicationCall.offset(): Offset {
 
 private fun ApplicationCall.pointerId(): Int {
     return optionalParam("pointerId")?.toInt() ?: 0
+}
+
+private suspend fun RoutingContext.onNode(
+    test: ComposeUiTest,
+    autoRespondOkOrGif: Boolean,
+    f: suspend ComposeUiTest.(SemanticsNodeInteraction) -> Unit,
+) {
+    val gifDurationMs = call.optionalParam("gifDurationMs")?.toInt()
+
+    if (gifDurationMs == null || !autoRespondOkOrGif) {
+        test.f(test.onNode(call.node()))
+        if (autoRespondOkOrGif) ok()
+        return
+    }
+
+    require(gifDurationMs in 0..10_000) { "gifDurationMs should be <= 10_000 and >= 0" }
+
+    val timeBetweenFramesMs = 16L
+    val frames = generateFrames(test, gifDurationMs, timeBetweenFramesMs, f)
+    call.respondGif(frames, timeBetweenFramesMs)
+}
+
+private suspend fun RoutingContext.generateFrames(
+    test: ComposeUiTest,
+    gifDurationMs: Int,
+    timeBetweenFrames: Long,
+    f: suspend ComposeUiTest.(SemanticsNodeInteraction) -> Unit,
+): List<ImageBitmap> {
+    val frames = mutableListOf<ImageBitmap>()
+
+    fun screenshotFrame() {
+        test.waitForIdle()
+        frames += test.onRoot().captureToImage()
+    }
+
+    try {
+        test.mainClock.autoAdvance = false
+        test.f(test.onNode(call.node()))
+
+        var t = 0L
+        while (t <= gifDurationMs) {
+            screenshotFrame()
+            test.mainClock.advanceTimeBy(timeBetweenFrames)
+            t += timeBetweenFrames
+        }
+
+        return frames
+    } finally {
+        test.mainClock.autoAdvance = true
+    }
 }

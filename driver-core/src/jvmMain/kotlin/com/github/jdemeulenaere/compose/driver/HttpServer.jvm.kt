@@ -14,3 +14,12 @@ internal actual val ApplicationEngineFactory: ApplicationEngineFactory<*, *> = N
 internal actual suspend fun RoutingCall.respondImage(image: ImageBitmap) {
     respondOutputStream(ContentType.Image.PNG) { ImageIO.write(image.toAwtImage(), "png", this) }
 }
+
+internal actual suspend fun RoutingCall.respondGif(
+    frames: List<ImageBitmap>,
+    timeBetweenFramesMs: Long,
+) {
+    respondOutputStream(ContentType.Image.GIF) {
+        generateGif(frames.map { it.toAwtImage() }, this, timeBetweenFramesMs)
+    }
+}

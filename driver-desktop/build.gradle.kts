@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.application)
 }
 
-application { mainClass = "com.github.jdemeulenaere.compose.driver.sample.desktop.MainKt" }
+application { mainClass = "com.github.jdemeulenaere.compose.driver.desktop.MainKt" }
 
 dependencies {
     implementation(project(":driver-core"))
