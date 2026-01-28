@@ -1,8 +1,9 @@
-rootProject.name = "compose-driver"
+rootProject.name = "compose-driver-sample"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
+    includeBuild("../")
     repositories {
         google {
             mavenContent {
@@ -29,8 +30,18 @@ dependencyResolutionManagement {
     }
 }
 
-plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+    id("com.github.jdemeulenaere.compose.driver")
+}
 
-include(":driver-core")
+composeDriver {
+    androidProjectName.set("compose-driver-android")
+    desktopProjectName.set("compose-driver-desktop")
+}
 
-include(":driver-plugin")
+include(":android:lib")
+
+include(":desktop")
+
+include(":multiplatform")

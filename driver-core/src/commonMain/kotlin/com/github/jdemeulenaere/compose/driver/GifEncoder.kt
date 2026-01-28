@@ -1,16 +1,17 @@
 package com.github.jdemeulenaere.compose.driver
 
 import androidx.compose.ui.graphics.ImageBitmap
+import io.ktor.http.ContentType
+import io.ktor.server.routing.RoutingContext
 import java.io.OutputStream
 import java.nio.file.Files
 import kotlin.io.path.absolutePathString
 
 internal expect fun writePng(image: ImageBitmap, out: OutputStream)
 
-internal fun encodeGif(
+internal suspend fun RoutingContext.respondGif(
     frames: List<ImageBitmap>,
     timeBetweenFramesMs: Long,
-    outputStream: OutputStream,
 ) {
     val dir = Files.createTempDirectory("compose-driver-gif")
     try {
@@ -42,7 +43,7 @@ internal fun encodeGif(
             "${cmd.first()} failed with exit code $exitCode: $errorOutput"
         }
 
-        Files.copy(outputGif, outputStream)
+        call.respondStream(ContentType.Image.GIF) { Files.copy(outputGif, this) }
     } finally {
         dir.toFile().deleteRecursively()
     }

@@ -53,6 +53,33 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.withContext
 
+/**
+ * Start the Compose Driver server on port [port] with the composable whose full qualifier name is
+ * [contentComposableFullyQualifiedName].
+ *
+ * Example: For the `MyFoo` composable inside `Foo.kt` and with the `com.example.foo` package, call
+ * `startComposeDriverServer("com.example.foo.FooKt.MyFoo")`.
+ */
+fun startComposeDriverServer(
+    contentComposableFullyQualifiedName: String = systemPropertyComposable(),
+    port: Int = 8080,
+    factory: ApplicationEngineFactory<*, *> = ApplicationEngineFactory,
+    additionalModuleConfiguration: suspend Application.() -> Unit = {},
+) {
+    startComposeDriverServer(
+        port = port,
+        factory = factory,
+        additionalModuleConfiguration = additionalModuleConfiguration,
+        content = fullyQualifiedComposable(contentComposableFullyQualifiedName),
+    )
+}
+
+private fun systemPropertyComposable(): String {
+    return System.getProperty("compose.driver.composable")
+        ?: error("System property compose.driver.composable not set")
+}
+
+/** Start the Compose Driver server on port [port] with the given [content]. */
 fun startComposeDriverServer(
     port: Int = 8080,
     factory: ApplicationEngineFactory<*, *> = ApplicationEngineFactory,
@@ -141,7 +168,8 @@ private fun Application.configureDriverModule(
         }
         get("/screenshot") {
             onNode(autoRespondOkOrGif = false) { node ->
-                call.respondStream(ContentType.Image.PNG) { writePng(node.captureToImage(), this) }
+                val image = node.captureToImage()
+                call.respondStream(ContentType.Image.PNG) { writePng(image, this) }
             }
         }
         get("/printTree") {
@@ -237,7 +265,7 @@ private suspend fun RoutingContext.onNode(
 
     val timeBetweenFramesMs = 16L
     val frames = generateFrames(test, gifDurationMs, timeBetweenFramesMs, f)
-    call.respondStream(ContentType.Image.GIF) { encodeGif(frames, timeBetweenFramesMs, this) }
+    respondGif(frames, timeBetweenFramesMs)
 }
 
 private suspend fun RoutingContext.generateFrames(

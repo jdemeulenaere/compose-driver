@@ -8,7 +8,7 @@ plugins {
 kotlin {
     jvm()
     androidLibrary {
-        namespace = "com.github.jdemeulenaere.compose.driver"
+        namespace = "com.github.jdemeulenaere.compose.driver.sample.multiplatform"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
@@ -16,12 +16,8 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(libs.compose.material3)
                 implementation(libs.androidx.navigation.event)
-                implementation(libs.compose.ui.test.junit4)
-                implementation(libs.ktor.server.core)
-                implementation(libs.ktor.server.netty)
-                implementation(libs.ktor.server.call.logging)
-                implementation(libs.ktor.server.status.pages)
             }
         }
     }
