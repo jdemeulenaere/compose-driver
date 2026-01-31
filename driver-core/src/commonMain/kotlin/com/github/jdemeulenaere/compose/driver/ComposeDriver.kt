@@ -97,11 +97,12 @@ fun startComposeDriverServer(
         // Android tests don't allow calling setContent multiple times, so we use an increasing key
         // to force recreate the content state when /reset is called.
         var contentKey by mutableStateOf(0)
+        var currentContent by mutableStateOf(content)
         setContent {
             key(contentKey) {
                 CompositionLocalProvider(
                     LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
-                    content = content,
+                    content = currentContent,
                 )
             }
         }
@@ -111,7 +112,10 @@ fun startComposeDriverServer(
                     test = this@runComposeUiTest,
                     runTestContext = runTestContext,
                     navigationEventDispatcher = navigationEventDispatcher,
-                    onReset = {
+                    onReset = { composableName ->
+                        if (composableName != null) {
+                            currentContent = fullyQualifiedComposable(composableName)
+                        }
                         contentKey++
                         waitForIdle()
                     },
@@ -129,7 +133,7 @@ private fun Application.configureDriverModule(
     test: ComposeUiTest,
     runTestContext: CoroutineContext,
     navigationEventDispatcher: NavigationEventDispatcher,
-    onReset: () -> Unit,
+    onReset: (composableName: String?) -> Unit,
 ) {
     install(StatusPages) {
         exception<IllegalArgumentException> { call, cause ->
@@ -163,7 +167,8 @@ private fun Application.configureDriverModule(
     routing {
         get("/status") { ok() }
         get("/reset") {
-            withContext(runTestContext) { onReset() }
+            val composableName = call.optionalParam("composable")
+            withContext(runTestContext) { onReset(composableName) }
             ok()
         }
         get("/screenshot") {

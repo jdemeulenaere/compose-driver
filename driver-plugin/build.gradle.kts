@@ -17,7 +17,8 @@ gradlePlugin {
             implementationClass =
                 "com.github.jdemeulenaere.compose.driver.plugin.DriverSettingsPlugin"
             displayName = "Compose Driver Plugin"
-            description = "Plugin to add and automatically configure Compose Driver in a Compose project"
+            description =
+                "Plugin to add and automatically configure Compose Driver in a Compose project"
         }
     }
 }
