@@ -3,7 +3,12 @@ plugins {
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    `maven-publish`
 }
+
+group = "com.github.jdemeulenaere"
+
+version = "0.1.0"
 
 kotlin {
     jvm()
@@ -22,6 +27,21 @@ kotlin {
                 implementation(libs.ktor.server.netty)
                 implementation(libs.ktor.server.call.logging)
                 implementation(libs.ktor.server.status.pages)
+            }
+        }
+    }
+}
+
+publishing {
+    publications {
+        withType<MavenPublication> {
+            val publicationName = this.name
+            if (publicationName == "kotlinMultiplatform") {
+                artifactId = "compose-driver-core"
+            } else if (publicationName == "jvm") {
+                artifactId = "compose-driver-jvm"
+            } else if (publicationName == "android") {
+                artifactId = "compose-driver-android"
             }
         }
     }
