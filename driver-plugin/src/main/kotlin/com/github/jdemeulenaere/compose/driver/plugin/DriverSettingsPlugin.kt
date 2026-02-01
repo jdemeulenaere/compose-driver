@@ -150,7 +150,7 @@ private fun androidBuildFile(
     
     android {
         namespace = "com.github.jdemeulenaere.compose.driver.android"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        compileSdk = 36
     
         defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
     
