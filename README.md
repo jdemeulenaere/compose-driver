@@ -1,25 +1,26 @@
 # Compose Driver
 
-Compose Driver is a tool designed to allow AI tools (and other external agents) to interact with any
-Jetpack Compose UI (Android and Desktop) via a simple HTTP API. It essentially wraps your Composable
-in a test harness and exposes an HTTP server to control it.
+**Make AI Agents see and control your Compose UI.**
+
+Compose Driver enables AI agents and automated tools to interact with any Jetpack Compose UI (
+Android and Desktop) through a simple HTTP API. It wraps your Composable in a test harness, exposing
+a server that translates HTTP requests into `ComposeUiTest` actions.
 
 ## Features
 
-- **Cross-Platform**: Works with Android and JVM (Desktop) Compose.
-- **Zero Code Changes**: Integrates via a Gradle Settings plugin, requiring no changes to your
-  existing application code.
-- **HTTP Control**: Exposes a REST-like API to:
-    - Take screenshots of the entire screen or specific nodes.
-    - Perform gestures (click, scroll, swipe, text input).
-    - Inspect the UI tree.
-    - Record GIFs of interactions.
-    - Wait for idle states or specific nodes.
-    - Reset the UI state.
+- **Cross-Platform**: Supports Android and JVM (Desktop) Compose.
+- **Zero Code Changes**: Integrates via a Gradle Settings plugin. No production code changes
+  required.
+- **AI-Native API**: REST-like API designed for agents to "see" (screenshot/tree) and "act" (
+  click/swipe).
+- **Observability**: Record GIFs of interactions and capture screenshots on demand.
+- **Lightning Fast**: Uses virtual clock time on the host, executing complex flows in tens of
+  milliseconds.
 
 ## Installation
 
-Add the plugin to your `settings.gradle.kts`:
+Add the plugin to your `settings.gradle.kts`. This plugin automatically generates the necessary
+subprojects to run the driver.
 
 ```kotlin
 plugins {
@@ -27,16 +28,21 @@ plugins {
 }
 
 composeDriver {
+    // Enable the platforms you need
     android()
     desktop()
 }
 ```
 
-This plugin automatically creates two new generic projects (`:compose-driver-android` and
+This plugin automatically creates two new subprojects (`:compose-driver-android` and
 `:compose-driver-desktop`) in your build, configured to run your Composables within the driver
-environment.
+environment. `:compose-driver-android` will depend on all Android and Multiplatform subprojects that
+use Compose, and `:compose-driver-desktop` will depend on all JVM and Multiplatform subprojects that
+use Compose.
 
-Optionally, you can configure the generated project names and environment:
+## Configuration
+
+You can customize the generated driver projects using the `composeDriver` block.
 
 ```kotlin
 composeDriver {
@@ -58,98 +64,92 @@ composeDriver {
 
 ## Usage
 
-To run a specific Composable with the driver enabled, use the `run` task on the generated project
-and pass the fully qualified name of the Composable via `compose.driver.composable` system property.
+### 1. Run the Driver
 
-**Android:**
+To start the driver, use the generated `run` task. You must specify the Composable you want to drive
+using the `compose.driver.composable` system property.
+
+**Desktop**
+
+```bash
+./gradlew :compose-driver-desktop:run -Dcompose.driver.composable=com.example.app.MainKt.MainScreen
+```
+
+**Android**
+
+```bash
+./gradlew :compose-driver-android:run -Dcompose.driver.composable=com.example.app.MainKt.MainScreen
+```
 
 > [!NOTE]
-> The Android server runs in a robolectric test environment, so start-up is a bit slow and can take
-> a few seconds before the server is ready.
+> Android runs via Robolectric and starting the server might take a few seconds. For this reason, I
+> recommend using the Desktop driver when working on multiplatform code.
+
+### 2. Interact via HTTP
+
+Once running, the server listens at `http://localhost:8080`.
+
+**Example: Automated Login Flow**
 
 ```bash
-./gradlew :compose-driver-android:run -Dcompose.driver.composable=com.example.mypackage.MyScreenKt.MyScreen
-```
-
-**Desktop:**
-
-```bash
-./gradlew :compose-driver-desktop:run -Dcompose.driver.composable=com.example.mypackage.MyScreenKt.MyScreen
-```
-
-Once running, the server will be available at `http://localhost:8080`.
-
-## Interaction Example
-
-Here is an example sequence of commands to automate a login flow:
-
-```bash
-# 1. Wait for the login screen to appear
+# 1. Wait for login screen
 curl "http://localhost:8080/waitForNode?tag=login_screen"
 
-# 2. Enter username
-curl "http://localhost:8080/textInput?tag=username_field&text=myuser"
+# 2. Input credentials
+curl "http://localhost:8080/textInput?tag=username&text=admin"
+curl "http://localhost:8080/textInput?tag=password&text=secret"
 
-# 3. Enter password
-curl "http://localhost:8080/textInput?tag=password_field&text=mypassword"
-
-# 4. Click login button
-curl "http://localhost:8080/click?tag=login_button"
-
-# 5. Wait for home screen
-curl "http://localhost:8080/waitForNode?tag=home_screen"
-
-# 6. Take a screenshot
-curl "http://localhost:8080/screenshot" > screenshot.png
+# 3. Click login and record the transition (requires ffmpeg)
+curl "http://localhost:8080/click?tag=login_btn&gifDurationMs=2000" > login_flow.gif
 ```
 
 ## API Reference
 
 > [!IMPORTANT]
-> Most endpoints accept a `tag` parameter to target a specific semantic node (tagged using
-> `Modifier.testTag()`); if omitted, the root node is targeted.
+> Most endpoints accept a `tag` parameter to target a specific `Modifier.testTag()`. If omitted, the
+> action applies to the root node.
 >
-> All endpoints (like `/click`, `/swipe`, etc.) accept an optional `gifDurationMs` parameter. If
-> provided, the server will record a GIF of the interaction for the specified duration (max 5s) and
-> return it instead of the standard "ok" response.
+> All endpoints (like `/click`, `/swipe`, etc.) also **accept an optional `gifDurationMs` parameter
+**. If provided, the server will record a GIF of the interaction for the specified duration (max 5s)
+> and return it instead of the standard "ok" response.
 >
 > **Note**: This feature requires `ffmpeg` to be installed on the host machine and available in the
 > system PATH.
 
-### Inspection & State
+### Core & Observability
 
-- `GET /status`: Returns "ok" if server is running.
-- `GET /printTree`: Returns the accessibility semantic tree.
-- `GET /screenshot`: Returns a PNG screenshot.
-- `GET /waitForIdle`: Waits for Compose to be idle.
-- `GET /waitForNode`: Waits for a node to exist. Default timeout 5s.
+| Method | Endpoint       | Params           | Description                                                    |
+|:-------|:---------------|:-----------------|:---------------------------------------------------------------|
+| `GET`  | `/status`      |                  | Check if server is ready. Returns "ok".                        |
+| `GET`  | `/printTree`   |                  | Returns the semantic node tree as text.                        |
+| `GET`  | `/screenshot`  | `tag`            | Returns a PNG screenshot of the target node or root.           |
+| `GET`  | `/waitForIdle` |                  | Waits for the UI to be idle (no pending changes).              |
+| `GET`  | `/waitForNode` | `tag`, `timeout` | Waits for a node with `tag` to exist. **Default timeout:** 5s. |
 
 ### Interaction
 
-- `GET /click`: Clicks on the node.
-- `GET /doubleClick`: Double clicks on the node.
-- `GET /longClick`: Long clicks on the node.
-- `GET /textInput?text=...`: Enters text into the node.
-- `GET /textReplacement?text=...`: Replaces text in the node.
-- `GET /textClearance`: Clears text in the node.
-- `GET /navigateBack`: Triggers a back navigation event.
+| Method | Endpoint           | Params                  | Description                       |
+|:-------|:-------------------|:------------------------|:----------------------------------|
+| `GET`  | `/click`           | `tag`                   | Click a node.                     |
+| `GET`  | `/doubleClick`     | `tag`                   | Double-click a node.              |
+| `GET`  | `/longClick`       | `tag`                   | Long-press a node.                |
+| `GET`  | `/textInput`       | **`text`** (req), `tag` | Enter text into a field.          |
+| `GET`  | `/textReplacement` | **`text`** (req), `tag` | Replace existing text in a field. |
+| `GET`  | `/textClearance`   | `tag`                   | Clear text from a field.          |
+| `GET`  | `/navigateBack`    |                         | Trigger the system "Back" action. |
 
 ### Gestures
 
-- `GET /swipe?direction=LEFT|RIGHT|UP|DOWN`: Performs a swipe gesture.
-- `GET /pointerInput/down?x=...&y=...`: Sends pointer down event.
-- `GET /pointerInput/moveBy?x=...&y=...`: Moves pointer by delta.
-- `GET /pointerInput/moveTo?x=...&y=...`: Moves pointer to coordinate.
-- `GET /pointerInput/up`: Sends pointer up event.
+| Method | Endpoint               | Params                          | Description                             |
+|:-------|:-----------------------|:--------------------------------|:----------------------------------------|
+| `GET`  | `/swipe`               | **`direction`** (req), `tag`    | Swipe `UP`, `DOWN`, `LEFT`, or `RIGHT`. |
+| `GET`  | `/pointerInput/down`   | **`x`, `y`** (req), `pointerId` | Send pointer down event at (x,y).       |
+| `GET`  | `/pointerInput/moveBy` | **`x`, `y`** (req), `pointerId` | Move pointer by delta (x,y).            |
+| `GET`  | `/pointerInput/moveTo` | **`x`, `y`** (req), `pointerId` | Move pointer to absolute (x,y).         |
+| `GET`  | `/pointerInput/up`     | `pointerId`                     | Send pointer up event.                  |
 
 ### Lifecycle
 
-- `GET /reset?composable=...`: Resets the UI content. You can optionally switch to a different
-  Composable by providing the `composable` parameter.
-
-## How it works
-
-The `compose-driver` plugin generates a separate Gradle project that depends on your code and the
-`driver-core` library. It uses `ComposeUiTest` (the standard Compose testing library) to render your
-content and drive the UI clock. The embedded Ktor server listens for commands and bridges them to
-`ComposeUiTest` actions.
+| Method | Endpoint | Params       | Description                                                            |
+|:-------|:---------|:-------------|:-----------------------------------------------------------------------|
+| `GET`  | `/reset` | `composable` | Reset the UI state. Optionally switch to a different Composable class. |
