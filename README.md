@@ -13,6 +13,7 @@ in a test harness and exposes an HTTP server to control it.
     - Take screenshots of the entire screen or specific nodes.
     - Perform gestures (click, scroll, swipe, text input).
     - Inspect the UI tree.
+    - Record GIFs of interactions.
     - Wait for idle states or specific nodes.
     - Reset the UI state.
 
@@ -106,7 +107,14 @@ curl "http://localhost:8080/screenshot" > screenshot.png
 
 > [!IMPORTANT]
 > Most endpoints accept a `tag` parameter to target a specific semantic node (tagged using
-`Modifier.testTag()`); if omitted, the root node is targeted.
+> `Modifier.testTag()`); if omitted, the root node is targeted.
+>
+> All endpoints (like `/click`, `/swipe`, etc.) accept an optional `gifDurationMs` parameter. If
+> provided, the server will record a GIF of the interaction for the specified duration (max 5s) and
+> return it instead of the standard "ok" response.
+>
+> **Note**: This feature requires `ffmpeg` to be installed on the host machine and available in the
+> system PATH.
 
 ### Inspection & State
 

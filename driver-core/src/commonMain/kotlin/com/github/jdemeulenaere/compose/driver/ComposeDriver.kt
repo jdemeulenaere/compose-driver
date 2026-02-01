@@ -265,7 +265,7 @@ private suspend fun RoutingContext.onNode(
         return
     }
 
-    require(gifDurationMs in 0..10_000) { "gifDurationMs should be <= 10_000 and >= 0" }
+    require(gifDurationMs in 0..5_000) { "gifDurationMs should be <= 5_000 and >= 0" }
 
     val timeBetweenFramesMs = 16L
     val frames = generateFrames(test, gifDurationMs, timeBetweenFramesMs, f)
