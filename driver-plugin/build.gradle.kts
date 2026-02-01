@@ -1,14 +1,35 @@
 plugins {
     `kotlin-dsl`
-    alias(libs.plugins.androidLint)
     `maven-publish`
+    alias(libs.plugins.androidLint)
 }
 
 group = "com.github.jdemeulenaere"
 
-version = "0.1.0"
+version = providers.gradleProperty("compose.driver.version").get()
 
 dependencies { lintChecks(libs.androidx.lint.gradle) }
+
+val generateVersionFile by
+    tasks.registering {
+        val outputDir = layout.buildDirectory.dir("generated/resources")
+        val version =
+            if (providers.gradleProperty("compose.driver.dev").orNull == "true") {
+                "dev"
+            } else {
+                project.version
+            }
+
+        inputs.property("version", version)
+        outputs.dir(outputDir)
+        doLast {
+            val propsFile = outputDir.get().file("compose-driver.properties").asFile
+            propsFile.parentFile.mkdirs()
+            propsFile.writeText("version=$version")
+        }
+    }
+
+sourceSets.main { resources.srcDir(generateVersionFile) }
 
 gradlePlugin {
     plugins {

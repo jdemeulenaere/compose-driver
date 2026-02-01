@@ -8,7 +8,7 @@ plugins {
 
 group = "com.github.jdemeulenaere"
 
-version = "0.1.0"
+version = providers.gradleProperty("compose.driver.version").get()
 
 kotlin {
     jvm()
