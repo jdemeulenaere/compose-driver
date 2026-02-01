@@ -230,8 +230,8 @@ private fun desktopBuildFile(
     driverDependency: String,
     configuration: DesktopDriverConfiguration,
 ): String {
-    val width = configuration.widthDp.orNull
-    val height = configuration.heightDp.orNull
+    val width = configuration.width.orNull
+    val height = configuration.height.orNull
     val density = configuration.density.orNull
 
     return """

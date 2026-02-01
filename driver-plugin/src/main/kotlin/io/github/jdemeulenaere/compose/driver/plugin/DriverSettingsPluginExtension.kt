@@ -42,8 +42,8 @@ abstract class DriverPlatformConfiguration {
 }
 
 abstract class DesktopDriverConfiguration : DriverPlatformConfiguration() {
-    abstract val widthDp: Property<Int>
-    abstract val heightDp: Property<Int>
+    abstract val width: Property<Int>
+    abstract val height: Property<Int>
     abstract val density: Property<Float>
 }
 
