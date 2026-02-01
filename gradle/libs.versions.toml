@@ -12,7 +12,9 @@ ktor = "3.4.0"
 navigationEvent = "1.0.1"
 robolectric = "4.16.1"
 jetbrainsKotlinJvm = "2.3.0"
+gradlePluginPublish = "2.0.0"
 slf4j = "2.0.17"
+vanniktechMavenPublish = "0.36.0"
 
 [libraries]
 junit = { module = "junit:junit", version.ref = "junit" }
@@ -38,3 +40,5 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "androidGradlePlugin" }
 androidLint = { id = "com.android.lint", version.ref = "androidGradlePlugin" }
 jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+vanniktechMavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktechMavenPublish" }
+gradlePluginPublish = { id = "com.gradle.plugin-publish", version.ref = "gradlePluginPublish" }

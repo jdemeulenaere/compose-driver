@@ -11,6 +11,7 @@ kotlin = "2.3.0"
 material3 = "1.10.0-alpha05"
 robolectric = "4.16.1"
 jetbrainsKotlinJvm = "2.3.0"
+vanniktechMavenPublish = "0.36.0"
 
 [libraries]
 junit = { module = "junit:junit", version.ref = "junit" }
@@ -31,3 +32,4 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "androidGradlePlugin" }
 androidLint = { id = "com.android.lint", version.ref = "androidGradlePlugin" }
 jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+vanniktechMavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktechMavenPublish" }

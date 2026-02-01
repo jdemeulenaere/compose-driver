@@ -128,7 +128,7 @@ private fun driverDependency(version: String): String {
     return if (version.endsWith("-SNAPSHOT")) {
         "project(\":compose-driver:driver-core\")"
     } else {
-        "\"com.github.jdemeulenaere:compose-driver-core:$version\""
+        "\"com.github.jdemeulenaere:compose-driver:$version\""
     }
 }
 

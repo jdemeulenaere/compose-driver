@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    `maven-publish`
+    alias(libs.plugins.vanniktechMavenPublish)
 }
 
 group = "com.github.jdemeulenaere"
@@ -32,17 +32,39 @@ kotlin {
     }
 }
 
-publishing {
-    publications {
-        withType<MavenPublication> {
-            val publicationName = this.name
-            if (publicationName == "kotlinMultiplatform") {
-                artifactId = "compose-driver-core"
-            } else if (publicationName == "jvm") {
-                artifactId = "compose-driver-jvm"
-            } else if (publicationName == "android") {
-                artifactId = "compose-driver-android"
+mavenPublishing {
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "compose-driver",
+        version = project.version.toString(),
+    )
+
+    pom {
+        name = "Compose Driver"
+        description = "Make AI tools able to see and control Compose UIs"
+        url = "https://github.com/jdemeulenaere/compose-driver"
+        inceptionYear = "2026"
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "http://www.apache.org/licenses/LICENSE-2.0.txt"
             }
         }
+        developers {
+            developer {
+                id = "jdemeulenaere"
+                name = "Jordan Demeulenaere"
+                url = "https://github.com/jdemeulenaere/"
+            }
+        }
+        scm {
+            connection = "scm:git:git://github.com/jdemeulenaere/compose-driver.git"
+            developerConnection = "scm:git:ssh://github.com/jdemeulenaere/compose-driver.git"
+            url = "https://github.com/jdemeulenaere/compose-driver"
+        }
     }
+
+    publishToMavenCentral(automaticRelease = true)
+    signAllPublications()
 }

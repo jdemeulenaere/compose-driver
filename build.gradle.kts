@@ -6,4 +6,6 @@ plugins {
     alias(libs.plugins.androidKotlinMultiplatformLibrary) apply false
     alias(libs.plugins.androidLint) apply false
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
+    alias(libs.plugins.vanniktechMavenPublish) apply false
+    alias(libs.plugins.gradlePluginPublish) apply false
 }

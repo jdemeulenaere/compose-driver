@@ -2,6 +2,7 @@ plugins {
     `kotlin-dsl`
     `maven-publish`
     alias(libs.plugins.androidLint)
+    alias(libs.plugins.gradlePluginPublish)
 }
 
 group = "com.github.jdemeulenaere"
@@ -34,6 +35,12 @@ gradlePlugin {
             displayName = "Compose Driver Plugin"
             description =
                 "Plugin to add and automatically configure Compose Driver in a Compose project"
+            tags.set(
+                listOf("compose", "driver", "ui-testing", "android", "desktop", "multiplatform")
+            )
         }
     }
+
+    website.set("https://github.com/jdemeulenaere/compose-driver")
+    vcsUrl.set("https://github.com/jdemeulenaere/compose-driver")
 }
