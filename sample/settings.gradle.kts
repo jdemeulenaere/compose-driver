@@ -59,8 +59,8 @@ plugins {
 }
 
 composeDriver {
-    androidProjectName.set("compose-driver-android")
-    desktopProjectName.set("compose-driver-desktop")
+    android()
+    desktop()
 }
 
 include(":android:lib")
