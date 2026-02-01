@@ -8,7 +8,7 @@ plugins {
 kotlin {
     jvm()
     androidLibrary {
-        namespace = "com.github.jdemeulenaere.compose.driver.sample.multiplatform"
+        namespace = "io.github.jdemeulenaere.compose.driver.sample.multiplatform"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
     }

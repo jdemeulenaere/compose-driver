@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.github.jdemeulenaere.compose.driver.sample.android"
+    namespace = "io.github.jdemeulenaere.compose.driver.sample.android"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

@@ -24,7 +24,7 @@ subprojects to run the driver.
 
 ```kotlin
 plugins {
-    id("com.github.jdemeulenaere.compose.driver") version "0.1.0"
+    id("io.github.jdemeulenaere.compose.driver") version "0.1.0"
 }
 
 composeDriver {

@@ -6,14 +6,14 @@ plugins {
     alias(libs.plugins.vanniktechMavenPublish)
 }
 
-group = "com.github.jdemeulenaere"
+group = "io.github.jdemeulenaere"
 
 version = providers.gradleProperty("compose.driver.version").get()
 
 kotlin {
     jvm()
     androidLibrary {
-        namespace = "com.github.jdemeulenaere.compose.driver"
+        namespace = "io.github.jdemeulenaere.compose.driver"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
     }

@@ -28,7 +28,7 @@ pluginManagement {
 
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.id == "com.github.jdemeulenaere.compose.driver") {
+            if (requested.id.id == "io.github.jdemeulenaere.compose.driver") {
                 useVersion(version)
             }
         }
@@ -55,7 +55,7 @@ dependencyResolutionManagement {
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-    id("com.github.jdemeulenaere.compose.driver")
+    id("io.github.jdemeulenaere.compose.driver")
 }
 
 composeDriver {

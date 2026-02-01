@@ -18,7 +18,7 @@ The Compose Driver plugin automatically creates run tasks for you.
 Run the sample on Desktop:
 
 ```bash
-./gradlew :compose-driver-desktop:run -Dcompose.driver.composable=com.github.jdemeulenaere.compose.driver.sample.desktop.DesktopApplicationKt.DesktopApplication
+./gradlew :compose-driver-desktop:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.desktop.DesktopApplicationKt.DesktopApplication
 ```
 
 ### Android
@@ -26,7 +26,7 @@ Run the sample on Desktop:
 Run the sample on Android (via Robolectric):
 
 ```bash
-./gradlew :compose-driver-android:run -Dcompose.driver.composable=com.github.jdemeulenaere.compose.driver.sample.android.AndroidApplicationKt.AndroidApplication
+./gradlew :compose-driver-android:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.android.AndroidApplicationKt.AndroidApplication
 ```
 
 ## Interacting with the Driver
