@@ -25,7 +25,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.printToString
-import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
@@ -93,7 +92,7 @@ fun startComposeDriverServer(
         }
 
     val runTestContext = StandardTestDispatcher()
-    runComposeUiTest(runTestContext = runTestContext, testTimeout = Duration.INFINITE) {
+    runUiTest(runTestContext = runTestContext, testTimeout = Duration.INFINITE) {
         // Android tests don't allow calling setContent multiple times, so we use an increasing key
         // to force recreate the content state when /reset is called.
         var contentKey by mutableStateOf(0)
@@ -109,7 +108,7 @@ fun startComposeDriverServer(
 
         embeddedServer(factory, port = port) {
                 configureDriverModule(
-                    test = this@runComposeUiTest,
+                    test = this@runUiTest,
                     runTestContext = runTestContext,
                     navigationEventDispatcher = navigationEventDispatcher,
                     onReset = { composableName ->

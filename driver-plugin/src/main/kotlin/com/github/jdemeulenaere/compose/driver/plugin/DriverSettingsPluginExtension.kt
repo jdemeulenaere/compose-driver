@@ -7,7 +7,7 @@ import org.gradle.api.tasks.Nested
 abstract class DriverSettingsPluginExtension {
     @get:Nested abstract val android: AndroidDriverConfiguration
 
-    @get:Nested abstract val desktop: DriverPlatformConfiguration
+    @get:Nested abstract val desktop: DesktopDriverConfiguration
 
     fun android(action: Action<AndroidDriverConfiguration>) {
         android.enabled.set(true)
@@ -18,7 +18,7 @@ abstract class DriverSettingsPluginExtension {
         android.enabled.set(true)
     }
 
-    fun desktop(action: Action<DriverPlatformConfiguration>) {
+    fun desktop(action: Action<DesktopDriverConfiguration>) {
         desktop.enabled.set(true)
         action.execute(desktop)
     }
@@ -31,6 +31,12 @@ abstract class DriverSettingsPluginExtension {
 interface DriverPlatformConfiguration {
     val name: Property<String>
     val enabled: Property<Boolean>
+}
+
+interface DesktopDriverConfiguration : DriverPlatformConfiguration {
+    val widthDp: Property<Int>
+    val heightDp: Property<Int>
+    val density: Property<Float>
 }
 
 interface AndroidDriverConfiguration : DriverPlatformConfiguration {
