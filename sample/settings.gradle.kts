@@ -59,7 +59,7 @@ plugins {
 }
 
 composeDriver {
-    android()
+    android { missingDimensionStrategy("contentType", "demo") }
     desktop()
 }
 

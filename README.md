@@ -52,6 +52,9 @@ composeDriver {
             sdk = 36
             qualifiers = "w410dp-h920dp-xhdpi" // see https://robolectric.org/device-configuration/
         }
+
+        // Optional: Resolve dependency ambiguity for flavored projects (e.g. "nowinandroid")
+        missingDimensionStrategy("contentType", "demo") 
     }
     desktop {
         name = "compose-driver-desktop"

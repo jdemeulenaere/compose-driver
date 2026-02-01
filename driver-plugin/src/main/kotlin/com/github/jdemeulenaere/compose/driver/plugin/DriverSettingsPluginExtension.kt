@@ -1,6 +1,7 @@
 package com.github.jdemeulenaere.compose.driver.plugin
 
 import org.gradle.api.Action
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested
 
@@ -41,6 +42,12 @@ interface DesktopDriverConfiguration : DriverPlatformConfiguration {
 
 interface AndroidDriverConfiguration : DriverPlatformConfiguration {
     @get:Nested val robolectric: RobolectricConfiguration
+
+    val missingDimensionsStrategy: MapProperty<String, String>
+
+    fun missingDimensionStrategy(dimension: String, flavor: String) {
+        missingDimensionsStrategy.put(dimension, flavor)
+    }
 
     fun robolectric(action: Action<RobolectricConfiguration>) {
         action.execute(robolectric)
