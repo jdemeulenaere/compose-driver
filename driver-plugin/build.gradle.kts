@@ -13,13 +13,7 @@ dependencies { lintChecks(libs.androidx.lint.gradle) }
 val generateVersionFile by
     tasks.registering {
         val outputDir = layout.buildDirectory.dir("generated/resources")
-        val version =
-            if (providers.gradleProperty("compose.driver.dev").orNull == "true") {
-                "dev"
-            } else {
-                project.version
-            }
-
+        val version = project.version
         inputs.property("version", version)
         outputs.dir(outputDir)
         doLast {

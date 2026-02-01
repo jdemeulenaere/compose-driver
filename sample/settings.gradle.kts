@@ -3,22 +3,15 @@ rootProject.name = "compose-driver-sample"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
-    val isDev = providers.gradleProperty("compose.driver.dev").orNull?.toBoolean() ?: false
+    val version = providers.gradleProperty("compose.driver.version").get()
+    val isDev = version.endsWith("-SNAPSHOT")
     if (isDev) {
         includeBuild("../")
     }
 
-    val driverVersion =
-        if (!isDev) {
-            providers.gradleProperty("compose.driver.version").get()
-        } else {
-            null
-        }
-
-    val useMavenLocal =
-        providers.gradleProperty("compose.driver.local").orNull?.toBoolean() ?: false
-
     repositories {
+        val useMavenLocal =
+            providers.gradleProperty("compose.driver.local").orNull?.toBoolean() ?: false
         if (useMavenLocal) {
             mavenLocal()
         }
@@ -33,21 +26,19 @@ pluginManagement {
         gradlePluginPortal()
     }
 
-    driverVersion?.let { version ->
-        resolutionStrategy {
-            eachPlugin {
-                if (requested.id.id == "com.github.jdemeulenaere.compose.driver") {
-                    useVersion(version)
-                }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "com.github.jdemeulenaere.compose.driver") {
+                useVersion(version)
             }
         }
     }
 }
 
 dependencyResolutionManagement {
-    val useMavenLocal =
-        providers.gradleProperty("compose.driver.local").map { it.toBoolean() }.getOrElse(false)
     repositories {
+        val useMavenLocal =
+            providers.gradleProperty("compose.driver.local").map { it.toBoolean() }.getOrElse(false)
         if (useMavenLocal) {
             mavenLocal()
         }

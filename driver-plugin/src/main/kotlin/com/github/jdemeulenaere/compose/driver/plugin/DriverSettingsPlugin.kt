@@ -99,7 +99,7 @@ private fun addDependencies(
 private const val COMPOSABLE_PROPERTY = "compose.driver.composable"
 
 private fun driverDependency(version: String): String {
-    return if (version == "dev") {
+    return if (version.endsWith("-SNAPSHOT")) {
         "project(\":compose-driver:driver-core\")"
     } else {
         "\"com.github.jdemeulenaere:compose-driver-core:$version\""
