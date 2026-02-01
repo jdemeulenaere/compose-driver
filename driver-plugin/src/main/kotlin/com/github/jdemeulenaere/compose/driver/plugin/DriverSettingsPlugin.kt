@@ -60,7 +60,7 @@ private fun configureComposeDriverProject(settings: Settings) {
                 "Please add `android()` or `desktop()` to the `composeDriver { ... }` block in settings.gradle.kts."
         }
 
-        addDependencies(settings, androidProjectPath, desktopProjectPath)
+        addDependencies(settings, androidProjectPath, desktopProjectPath, extension)
     }
 }
 
@@ -92,6 +92,7 @@ private fun addDependencies(
     settings: Settings,
     androidProjectPath: String?,
     desktopProjectPath: String?,
+    extension: DriverSettingsPluginExtension,
 ) {
     settings.gradle.beforeProject {
         fun addDependency(path: String, projectPath: String) {
@@ -104,7 +105,20 @@ private fun addDependencies(
             }
         }
 
-        if (path == desktopProjectPath || path == androidProjectPath) {
+        if (path == androidProjectPath) {
+            project.plugins.withId("com.android.library") {
+                extension.android.dependencyActions.getOrElse(emptyList()).forEach {
+                    it.execute(dependencies)
+                }
+            }
+            return@beforeProject
+        }
+        if (path == desktopProjectPath) {
+            project.plugins.withId("application") {
+                extension.desktop.dependencyActions.getOrElse(emptyList()).forEach {
+                    it.execute(dependencies)
+                }
+            }
             return@beforeProject
         }
 

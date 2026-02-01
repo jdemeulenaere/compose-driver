@@ -53,8 +53,13 @@ composeDriver {
             qualifiers = "w410dp-h920dp-xhdpi" // see https://robolectric.org/device-configuration/
         }
 
-        // Optional: Resolve dependency ambiguity for flavored projects (e.g. "nowinandroid")
+        // Resolve dependency ambiguity for flavored projects (e.g. "nowinandroid")
         missingDimensionStrategy("contentType", "demo") 
+
+        // Manually add dependencies (e.g. Compose BOM)
+        dependencies {
+            add("implementation", platform("androidx.compose:compose-bom:2025.01.00"))
+        }
     }
     desktop {
         name = "compose-driver-desktop"
