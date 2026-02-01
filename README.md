@@ -35,12 +35,16 @@ This plugin automatically creates two new generic projects (`:compose-driver-and
 `:compose-driver-desktop`) in your build, configured to run your Composables within the driver
 environment.
 
-Optionally, you can configure the generated project names:
+Optionally, you can configure the generated project names and the Android environment (Robolectric):
 
 ```kotlin
 composeDriver {
     android {
         name = "compose-driver-android"
+        robolectric {
+            sdk = 36
+            qualifiers = "w410dp-h920dp-xhdpi" // see https://robolectric.org/device-configuration/
+        }
     }
     desktop {
         name = "compose-driver-desktop"

@@ -2,12 +2,17 @@ package com.github.jdemeulenaere.compose.driver.plugin
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
 /** Generate a test class that starts the Compose Driver server in a Robolectric environment. */
 abstract class GenerateAndroidTestClassTask : DefaultTask() {
     @get:OutputDirectory abstract val outputDir: DirectoryProperty
+    @get:Input @get:Optional abstract val sdk: Property<Int>
+    @get:Input @get:Optional abstract val qualifiers: Property<String>
 
     @TaskAction
     fun generate() {
@@ -31,10 +36,10 @@ abstract class GenerateAndroidTestClassTask : DefaultTask() {
             import org.robolectric.annotation.Config
             import org.robolectric.annotation.GraphicsMode
 
-            /** Test class generated to start the Compose Driver server in a Robolectric environment. */
+            /** Test class generated to start the Compose Driver server in a Robolectric environment. Do not edit. */
             @RunWith(AndroidJUnit4::class)
             @GraphicsMode(GraphicsMode.Mode.NATIVE)
-            @Config(sdk = [36], qualifiers = "w410dp-h920dp-xhdpi")
+            ${configAnnotation()}
             class ComposeDriverTest {
                 @Test
                 fun test() {
@@ -49,5 +54,11 @@ abstract class GenerateAndroidTestClassTask : DefaultTask() {
             """
                 .trimIndent()
         )
+    }
+
+    private fun configAnnotation(): String {
+        val sdk = sdk.orElse(36).get()
+        val qualifiers = qualifiers.orElse("w410dp-h920dp-xhdpi").get()
+        return "@Config(sdk = [$sdk], qualifiers = \"$qualifiers\")"
     }
 }
