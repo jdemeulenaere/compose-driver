@@ -13,13 +13,13 @@ local server that translates HTTP requests into `ComposeUiTest` actions.
 
 ## Running the Driver
 
-The driver must be running for the agent to interact with the UI. Start the driver using Gradle from
-the project root, specifying the fully qualified name of the Composable to test.
+The driver must be running for the agent to interact with the UI. Before starting the driver, **always
+ensure previous instances are killed** to avoid port conflicts (the server uses port 8080).
 
 **Desktop (Recommended for speed for JVM & Multiplatform apps):**
 
 ```bash
-./gradlew :compose-driver-desktop:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.desktop.DesktopApplicationKt.DesktopApplication
+pkill -f "compose-driver-desktop" || true; ./gradlew :compose-driver-desktop:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.desktop.DesktopApplicationKt.DesktopApplication
 ```
 
 **Android (Robolectric):**
@@ -29,12 +29,13 @@ the project root, specifying the fully qualified name of the Composable to test.
 > slower (~5s on modern hardware).
 
 ```bash
-./gradlew :compose-driver-android:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.android.AndroidApplicationKt.AndroidApplication
+pkill -f "compose-driver-android" || true; ./gradlew :compose-driver-android:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.android.AndroidApplicationKt.AndroidApplication
 ```
 
 * **Server Address:** `http://localhost:8080`
 * **Target:** `compose.driver.composable` must be the fully qualified name of the Composable
   function (e.g., `package.FileKt.ComposableName`).
+* **Wait for Ready:** After starting the command, poll `GET /status` until it returns "ok".
 
 ## API Reference (Agent Actions)
 
