@@ -19,13 +19,17 @@ the project root, specifying the fully qualified name of the Composable to test.
 **Desktop (Recommended for speed for JVM & Multiplatform apps):**
 
 ```bash
-./scripts/start-desktop.sh
+./gradlew :compose-driver-desktop:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.desktop.DesktopApplicationKt.DesktopApplication
 ```
 
 **Android (Robolectric):**
 
+> [!NOTE]
+> The Android server will run in a Robolectric test environment, so start-up is expected to be
+> slower (~5s on modern hardware).
+
 ```bash
-./scripts/start-android.sh
+./gradlew :compose-driver-android:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.android.AndroidApplicationKt.AndroidApplication
 ```
 
 * **Server Address:** `http://localhost:8080`
