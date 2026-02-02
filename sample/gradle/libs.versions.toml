@@ -6,7 +6,7 @@ androidxActivity = "1.12.3"
 androidxLintGradle = "1.0.0-alpha05"
 composeMultiplatform = "1.10.0"
 junit = "4.13.2"
-navigationEvent = "1.0.1"
+navigationEvent = "1.0.0"
 kotlin = "2.3.0"
 material3 = "1.10.0-alpha05"
 robolectric = "4.16.1"
@@ -21,7 +21,7 @@ compose-material3 = { module = "org.jetbrains.compose.material3:material3", vers
 compose-ui-test-junit4 = { group = "org.jetbrains.compose.ui", name = "ui-test-junit4", version.ref = "composeMultiplatform" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "composeMultiplatform" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
-androidx-navigation-event = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "navigationEvent" }
+androidx-navigation-event = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "navigationEvent" }
 
 [plugins]
 application = { id = "application" }
