@@ -3,15 +3,44 @@
 This project demonstrates how to use the **Compose Driver** to instrument and drive Jetpack Compose
 UI on Android and Desktop (JVM).
 
+**This sample is very barebone and contains barely any code.** You can use it to quickly get started
+with any project. Just open this folder in your favorite AI coding tool and prompt it: *"Create a
+multiplatform clone of [Instagram] in the `multiplatform/` directory. Use your `compose-driver`
+skill to iterate on the app and validate that it works as expected."*
+
 ## Project Structure
 
-- **`android/`**: Android library module.
-- **`desktop/`**: Desktop (JVM) application module.
-- **`multiplatform/`**: Shared UI code used by both platforms.
+- **`:android:lib`**: Android library module.
+- **`:android:app`**: Android application.
+- **`:desktop`**: Desktop (JVM) application module.
+- **`:multiplatform`**: Shared UI code used by both platforms.
 
-## Running the Driver
+(Note: This sample will soon contain an iOS application as well)
 
-The Compose Driver plugin automatically creates run tasks for you.
+## Running the apps
+
+### Desktop
+
+```bash
+./gradlew :desktop:run
+```
+
+### Android
+
+```bash
+./gradlew :android:app:installDebug
+adb shell am start -n io.github.jdemeulenaere.compose.driver.sample.android.app/.MainActivity
+```
+
+## Running the Compose Driver
+
+The Compose Driver plugin automatically generated subprojects that depend on `:android:lib`,
+`:desktop` and `:multiplatform`.
+
+> [!NOTE]
+> The Compose Driver is mostly meant to be run by your AI coding tools, but running it yourself and
+> pinging the endpoints in the browser is a fun way to see how (quickly) it works. **Make sure to
+have a [skill](.agent/skills/compose-driver/SKILL.md) explaining how to use it!**
 
 ### Desktop
 
@@ -33,6 +62,8 @@ Run the sample on Android (via Robolectric):
 
 Once the driver is running (default port `8080`), you can interact with it using HTTP requests in
 your browser or using `curl`.
+
+See the full API in [../README.md](../README.md).
 
 **Check Status:**
 

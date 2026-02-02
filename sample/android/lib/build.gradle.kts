@@ -15,12 +15,6 @@ android {
 
     testOptions { unitTests { isIncludeAndroidResources = true } }
 
-    flavorDimensions += "contentType"
-    productFlavors {
-        create("demo") { dimension = "contentType" }
-        create("prod") { dimension = "contentType" }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21

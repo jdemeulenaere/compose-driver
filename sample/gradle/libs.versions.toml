@@ -25,6 +25,7 @@ androidx-navigation-event = { module = "androidx.navigationevent:navigationevent
 
 [plugins]
 application = { id = "application" }
+androidApplication = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 androidLibrary = { id = "com.android.library", version.ref = "androidGradlePlugin" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

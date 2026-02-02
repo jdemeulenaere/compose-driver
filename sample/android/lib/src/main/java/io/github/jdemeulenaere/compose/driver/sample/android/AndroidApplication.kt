@@ -6,6 +6,6 @@ import io.github.jdemeulenaere.compose.driver.sample.multiplatform.Multiplatform
 
 @Composable
 @OptIn(ExperimentalSharedTransitionApi::class)
-private fun AndroidApplication() {
+fun AndroidApplication() {
     MultiplatformApplication(name = "AndroidApplication")
 }

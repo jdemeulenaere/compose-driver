@@ -59,12 +59,14 @@ plugins {
 }
 
 composeDriver {
-    android { missingDimensionStrategy("contentType", "demo") }
+    android()
     desktop {
         width = 410
         height = 920
     }
 }
+
+include(":android:app")
 
 include(":android:lib")
 

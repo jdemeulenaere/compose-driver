@@ -6,8 +6,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,38 +35,43 @@ private fun MultiplatformApplication() {
 fun MultiplatformApplication(name: String) {
     MaterialTheme {
         LookaheadScope {
-            var navigatedBack by remember { mutableStateOf(false) }
-            var clicked by remember { mutableStateOf(false) }
-            var longClicked by remember { mutableStateOf(false) }
-            var counter by remember { mutableIntStateOf(0) }
+            Scaffold { padding ->
+                var navigatedBack by remember { mutableStateOf(false) }
+                var clicked by remember { mutableStateOf(false) }
+                var longClicked by remember { mutableStateOf(false) }
+                var counter by remember { mutableIntStateOf(0) }
 
-            val backNavigationState =
-                rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
-            NavigationBackHandler(backNavigationState, onBackCompleted = { navigatedBack = true })
+                val backNavigationState =
+                    rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
+                NavigationBackHandler(
+                    backNavigationState,
+                    onBackCompleted = { navigatedBack = true },
+                )
 
-            Surface(
-                Modifier.fillMaxSize()
-                    .combinedClickable(
-                        onClick = { clicked = true },
-                        onLongClick = { longClicked = true },
-                    )
-            ) {
-                Column {
-                    Text("Hello World from $name !")
-                    Text("backPressed: $navigatedBack")
-                    Text("clicked: $clicked")
-                    Text("longClicked: $longClicked")
+                Surface(
+                    Modifier.fillMaxSize()
+                        .combinedClickable(
+                            onClick = { clicked = true },
+                            onLongClick = { longClicked = true },
+                        )
+                ) {
+                    Column(Modifier.padding(padding)) {
+                        Text("Hello World from $name !")
+                        Text("backPressed: $navigatedBack")
+                        Text("clicked: $clicked")
+                        Text("longClicked: $longClicked")
 
-                    if (counter % 2 == 1) {
-                        Spacer(Modifier.weight(1f))
-                    }
+                        if (counter % 2 == 1) {
+                            Spacer(Modifier.weight(1f))
+                        }
 
-                    Button(
-                        onClick = { counter++ },
-                        Modifier.testTag("button")
-                            .animateBounds(lookaheadScope = this@LookaheadScope),
-                    ) {
-                        Text("Counter: $counter")
+                        Button(
+                            onClick = { counter++ },
+                            Modifier.testTag("button")
+                                .animateBounds(lookaheadScope = this@LookaheadScope),
+                        ) {
+                            Text("Counter: $counter")
+                        }
                     }
                 }
             }
