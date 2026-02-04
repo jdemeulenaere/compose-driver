@@ -6,6 +6,9 @@ Compose Driver enables AI agents and automated tools to interact with any Jetpac
 Android and Desktop) through a simple HTTP API. It wraps your Composable in a test harness, exposing
 a server that translates HTTP requests into `ComposeUiTest` actions.
 
+**Try it out:** Clone this repository and open the [sample/](sample/) directory with your favorite
+AI coding tool.
+
 ## Features
 
 - **Cross-Platform**: Supports Android and JVM (Desktop) Compose.
