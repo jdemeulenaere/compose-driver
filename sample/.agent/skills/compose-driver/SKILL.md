@@ -1,21 +1,25 @@
 ---
 name: compose_driver
-description: Drive the Compose Driver sample app to test UI logic. Use it whenever you need to verify that Composables work as expected.
+description: Drive the Compose Driver sample app to test UI logic. Use it whenever you need to verify that Composables work as expected or to capture screenshots of a composable.
 ---
 
 # Compose Driver Skill
 
 ## Description
 
-The Compose Driver Skill enables AI agents to "see" and "control" any Jetpack Compose UI (Android or
+The Compose Driver Skill enables AI agents to see and control any Jetpack Compose UI (Android or
 Desktop) via a standardized HTTP API. It wraps a target Composable in a test harness and exposes a
 local server that translates HTTP requests into `ComposeUiTest` actions.
 
 ## Running the Driver
 
-The driver must be running for the agent to interact with the UI. Before starting the driver, *
-*always
-ensure previous instances are killed** to avoid port conflicts (the server uses port 8080).
+The driver must be running for the agent to interact with the UI. Before starting the driver,
+**always ensure previous instances are killed** to avoid port conflicts (the server uses port 8080).
+
+* **Server Address:** `http://localhost:8080`
+* **Target:** `compose.driver.composable` must be the fully qualified name of the Composable
+  function (e.g., `package.FileKt.ComposableName`).
+* **Wait for Ready:** After starting the command, poll `GET /status` until it returns "ok".
 
 **Desktop (Recommended for speed for JVM & Multiplatform apps):**
 
@@ -33,16 +37,13 @@ pkill -f "compose-driver-desktop" || true; ./gradlew :compose-driver-desktop:run
 pkill -f "compose-driver-android" || true; ./gradlew :compose-driver-android:run -Dcompose.driver.composable=io.github.jdemeulenaere.compose.driver.sample.android.AndroidApplicationKt.AndroidApplication
 ```
 
-* **Server Address:** `http://localhost:8080`
-* **Target:** `compose.driver.composable` must be the fully qualified name of the Composable
-  function (e.g., `package.FileKt.ComposableName`).
-* **Wait for Ready:** After starting the command, poll `GET /status` until it returns "ok".
-
 ## API Reference (Agent Actions)
 
 The agent interacts with the UI by sending HTTP GET requests.
 
 **Common Parameters:**
+
+These parameters can be used on all endpoints, applying the operation to the matching node.
 
 * `nodeTag` (Optional): The `Modifier.testTag` of the target node.
 * `nodeText` (Optional): Matches a node by its text content.
@@ -57,11 +58,11 @@ The agent interacts with the UI by sending HTTP GET requests.
 
 ### 1. Observation (Seeing the UI)
 
-| Action                | Endpoint      | Additional parameters | Description                                                                                                         |
-|:----------------------|:--------------|:----------------------|:--------------------------------------------------------------------------------------------------------------------|
-| **Inspect Hierarchy** | `/printTree`  |                       | Returns the accessibility/semantic tree of the UI as text. Use this to find `testTag`s and understand UI structure. |
-| **Take Screenshot**   | `/screenshot` |                       | Returns a PNG image of the specific node (or full screen if no node params).                                        |
-| **Check Status**      | `/status`     |                       | Returns "ok" if the driver is ready.                                                                                |
+| Action                | Endpoint      | Description                                                                                                         |
+|:----------------------|:--------------|:--------------------------------------------------------------------------------------------------------------------|
+| **Inspect Hierarchy** | `/printTree`  | Returns the accessibility/semantic tree of the UI as text. Use this to find `testTag`s and understand UI structure. |
+| **Take Screenshot**   | `/screenshot` | Returns a PNG image of the specific node (or full screen if no node params).                                        |
+| **Check Status**      | `/status`     | Returns "ok" if the driver is ready.                                                                                |
 
 ### 2. Synchronization (Waiting)
 
@@ -107,7 +108,7 @@ The agent interacts with the UI by sending HTTP GET requests.
 3. **Act:**
     * `GET /textInput?nodeTag=username_field&text=myuser`
     * `GET /textInput?nodeTag=password_field&text=mypass`
-    * `GET /click?nodeTag=login_button`
+    * `GET /click?nodeText=login&nodeTextIgnoreCase=true&nodeTextSubstring=true`
 4. **Verify:** `GET /waitForNode?nodeTag=home_screen_title`
 
 **Scenario: Debugging an Animation**

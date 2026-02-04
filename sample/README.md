@@ -6,7 +6,8 @@ UI on Android and Desktop (JVM).
 **This sample is very barebone and contains barely any code.** You can use it to quickly get started
 with any project. Just open this folder in your favorite AI coding tool and prompt it: *"Create a
 multiplatform clone of [Instagram] in the `multiplatform/` directory. Use your `compose-driver`
-skill to iterate on the app and validate that it works as expected."*
+skill to iterate on the app and validate that it works as expected, and to share some screenshots of
+the different screens as you progress."*
 
 ## Project Structure
 
@@ -14,8 +15,7 @@ skill to iterate on the app and validate that it works as expected."*
 - **`:android:app`**: Android application.
 - **`:desktop`**: Desktop (JVM) application module.
 - **`:multiplatform`**: Shared UI code used by both platforms.
-
-(Note: This sample will soon contain an iOS application as well)
+- (iOS module coming soon)
 
 ## Running the apps
 
@@ -40,7 +40,7 @@ The Compose Driver plugin automatically generated subprojects that depend on `:a
 > [!NOTE]
 > The Compose Driver is mostly meant to be run by your AI coding tools, but running it yourself and
 > pinging the endpoints in the browser is a fun way to see how (quickly) it works. **Make sure to
-have a [skill](.agent/skills/compose-driver/SKILL.md) explaining how to use it!**
+have an [agent skill](.agent/skills/compose-driver/SKILL.md) that describes how to use it!**
 
 ### Desktop
 

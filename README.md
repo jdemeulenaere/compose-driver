@@ -11,16 +11,17 @@ a server that translates HTTP requests into `ComposeUiTest` actions.
 - **Cross-Platform**: Supports Android and JVM (Desktop) Compose.
 - **Zero Code Changes**: Integrates via a Gradle Settings plugin. No production code changes
   required.
-- **AI-Native API**: REST-like API designed for agents to "see" (screenshot/tree) and "act" (
-  click/swipe).
+- **AI-Native API**: REST-like API designed for agents to "see" (screenshot/tree) and "act"
+  (click/swipe).
 - **Observability**: Record GIFs of interactions and capture screenshots on demand.
 - **Lightning Fast**: Uses virtual clock time on the host, executing complex flows in tens of
   milliseconds.
+- **Headless**: Does not require a browser, GUI or device, making it perfect for background or cloud
+  agents.
 
 ## Installation
 
-Add the plugin to your `settings.gradle.kts`. This plugin automatically generates the necessary
-subprojects to run the driver.
+Add the plugin to your `settings.gradle.kts`.
 
 ```kotlin
 plugins {
@@ -34,11 +35,11 @@ composeDriver {
 }
 ```
 
-This plugin automatically creates two new subprojects (`:compose-driver-android` and
+The plugin will automatically create two new subprojects (`:compose-driver-android` and
 `:compose-driver-desktop`) in your build, configured to run your Composables within the driver
-environment. `:compose-driver-android` will depend on all Android and Multiplatform subprojects that
-use Compose, and `:compose-driver-desktop` will depend on all JVM and Multiplatform subprojects that
-use Compose.
+environment. `:compose-driver-android` will depend on all your Android and Multiplatform subprojects
+that use Compose, and `:compose-driver-desktop` will depend on all JVM and Multiplatform subprojects
+that use Compose.
 
 ## Configuration
 
@@ -53,13 +54,13 @@ composeDriver {
             qualifiers = "w410dp-h920dp-xhdpi" // see https://robolectric.org/device-configuration/
         }
 
-        // Resolve dependency ambiguity for flavored projects (e.g. "nowinandroid")
-        missingDimensionStrategy("contentType", "demo")
-
         // Manually add dependencies (e.g. Compose BOM)
         dependencies {
             add("implementation", platform("androidx.compose:compose-bom:2025.01.00"))
         }
+
+        // Resolve dependency ambiguity for flavored projects (e.g. "nowinandroid")
+        missingDimensionStrategy("contentType", "demo")
     }
     desktop {
         name = "compose-driver-desktop"
@@ -107,8 +108,8 @@ curl "http://localhost:8080/waitForNode?nodeTag=login_screen"
 curl "http://localhost:8080/textInput?nodeTag=username&text=admin"
 curl "http://localhost:8080/textInput?nodeTag=password&text=secret"
 
-# 3. Click login and record the transition (requires ffmpeg)
-curl "http://localhost:8080/click?nodeTag=login_btn&gifDurationMs=2000" > login_flow.gif
+# 3. Click on the "Login" button and record the transition (requires ffmpeg)
+curl "http://localhost:8080/click?nodeText=login&nodeTextIgnoreCase=true&nodeTextSubstring=true&gifDurationMs=2000" > login_flow.gif
 ```
 
 ## API Reference
@@ -124,14 +125,6 @@ curl "http://localhost:8080/click?nodeTag=login_btn&gifDurationMs=2000" > login_
 > If both `nodeTag` and `nodeText` are provided, the node must match **both**. If neither is
 > provided,
 > the action applies to the root node.
->
-> All endpoints (like `/click`, `/swipe`, etc.) also **accept an optional `gifDurationMs` parameter
-> **. If provided, the server will record a GIF of the interaction for the specified duration (max
-> 5s)
-> and return it instead of the standard "ok" response.
->
-> **Note**: This feature requires `ffmpeg` to be installed on the host machine and available in the
-> system PATH.
 
 ### Core & Observability
 
@@ -170,3 +163,13 @@ curl "http://localhost:8080/click?nodeTag=login_btn&gifDurationMs=2000" > login_
 | Method | Endpoint | Params       | Description                                                            |
 |:-------|:---------|:-------------|:-----------------------------------------------------------------------|
 | `GET`  | `/reset` | `composable` | Reset the UI state. Optionally switch to a different Composable class. |
+
+### GIF generation
+
+All endpoints (like `/click`, `/swipe`, etc.) also **accept an optional `gifDurationMs`
+parameter**. If provided, the server will record a GIF of the interaction for the specified
+duration (max 5,000 ms) and return it instead of the standard "ok" response.
+
+> [!NOTE]
+> **Note**: This feature requires `ffmpeg` to be installed on the host machine and available in the
+> system PATH.
