@@ -25,7 +25,7 @@ Add the plugin to your `settings.gradle.kts`.
 
 ```kotlin
 plugins {
-    id("io.github.jdemeulenaere.compose.driver") version "0.1.0"
+    id("io.github.jdemeulenaere.compose.driver") version "0.3.0"
 }
 
 composeDriver {
