@@ -16,6 +16,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onRoot
@@ -229,7 +230,23 @@ private suspend fun RoutingContext.ok() {
 }
 
 private fun ApplicationCall.node(): SemanticsMatcher {
-    return optionalParam("tag")?.let { hasTestTag(it) } ?: isRoot()
+    val nodeTag = optionalParam("nodeTag")
+    val nodeText = optionalParam("nodeText")
+    val nodeTextSubstring = optionalParam("nodeTextSubstring")?.toBoolean() ?: false
+    val nodeTextIgnoreCase = optionalParam("nodeTextIgnoreCase")?.toBoolean() ?: false
+
+    val tagMatcher = nodeTag?.let { hasTestTag(it) }
+    val textMatcher =
+        nodeText?.let {
+            hasText(it, substring = nodeTextSubstring, ignoreCase = nodeTextIgnoreCase)
+        }
+
+    return when {
+        tagMatcher != null && textMatcher != null -> tagMatcher and textMatcher
+        tagMatcher != null -> tagMatcher
+        textMatcher != null -> textMatcher
+        else -> isRoot()
+    }
 }
 
 private fun ApplicationCall.requiredParam(name: String): String {

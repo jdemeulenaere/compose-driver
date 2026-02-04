@@ -81,5 +81,5 @@ curl http://localhost:8080/printTree
 
 ```bash
 # Click the button with testTag "button"
-curl "http://localhost:8080/click?tag=button"
+curl "http://localhost:8080/click?nodeTag=button"
 ```
