@@ -150,6 +150,7 @@ curl "http://localhost:8080/click?nodeText=login&nodeTextIgnoreCase=true&nodeTex
 | `GET`  | `/textReplacement` | **`text`** (req) | Replace existing text in a field. |
 | `GET`  | `/textClearance`   |                  | Clear text from a field.          |
 | `GET`  | `/navigateBack`    |                  | Trigger the system "Back" action. |
+| `GET`  | `/scrollTo`        |                  | Scrolls to the node.              |
 
 ### Gestures
 

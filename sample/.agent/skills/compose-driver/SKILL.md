@@ -73,15 +73,16 @@ These parameters can be used on all endpoints, applying the operation to the mat
 
 ### 3. Interaction (Control)
 
-| Action            | Endpoint           | Additional parameters | Description                                                              |
-|:------------------|:-------------------|:----------------------|:-------------------------------------------------------------------------|
-| **Click**         | `/click`           |                       | Performs a click on the element.                                         |
-| **Double Click**  | `/doubleClick`     |                       | Performs a double-click.                                                 |
-| **Long Click**    | `/longClick`       |                       | Performs a long-press.                                                   |
-| **Input Text**    | `/textInput`       | `text` (req)          | Types text into a focused or specified text field.                       |
-| **Replace Text**  | `/textReplacement` | `text` (req)          | Replaces the text content directly (simulates pasting/programmatic set). |
-| **Clear Text**    | `/textClearance`   |                       | Clears the text in a field.                                              |
-| **Navigate Back** | `/navigateBack`    |                       | Triggers the system "Back" button event.                                 |
+| Action            | Endpoint           | Additional parameters | Description                                                                               |
+|:------------------|:-------------------|:----------------------|:------------------------------------------------------------------------------------------|
+| **Click**         | `/click`           |                       | Performs a click on the element.                                                          |
+| **Double Click**  | `/doubleClick`     |                       | Performs a double-click.                                                                  |
+| **Long Click**    | `/longClick`       |                       | Performs a long-press.                                                                    |
+| **Input Text**    | `/textInput`       | `text` (req)          | Types text into a focused or specified text field.                                        |
+| **Replace Text**  | `/textReplacement` | `text` (req)          | Replaces the text content directly (simulates pasting/programmatic set).                  |
+| **Clear Text**    | `/textClearance`   |                       | Clears the text in a field.                                                               |
+| **Navigate Back** | `/navigateBack`    |                       | Triggers the system "Back" button event.                                                  |
+| **Scroll To**     | `/scrollTo`        |                       | Scrolls to make the element visible in the viewport, so that it can then be clicked, etc. |
 
 ### 4. Gestures
 
@@ -115,3 +116,13 @@ These parameters can be used on all endpoints, applying the operation to the mat
 
 1. **Record:** `GET /click?nodeTag=animate_btn&gifDurationMs=1000`
     * *Result:* Returns a GIF file showing the click and the subsequent 1 second of animation.
+
+**Scenario: Interacting with Off-Screen List Items**
+
+If `printTree` shows an element exists but is not visible because it is in a scrollable container
+and outside of the current viewport, you **must** scroll to it before interacting with it (e.g.
+clicking).
+
+1. **Inspect:** `GET /printTree` -> Find the tag `target_item`.
+2. **Scroll:** `GET /scrollTo?nodeTag=target_item` -> This brings the item into the viewport.
+3. **Act:** `GET /click?nodeTag=target_item`
