@@ -53,6 +53,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
+import java.nio.file.Files
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.withContext
@@ -139,6 +140,7 @@ private fun Application.configureDriverModule(
     navigationEventDispatcher: NavigationEventDispatcher,
     onReset: (composableName: String?) -> Unit,
 ) {
+    val videoRecorder = VideoRecorder()
     install(StatusPages) {
         exception<IllegalArgumentException> { call, cause ->
             call.respondText(
@@ -162,8 +164,10 @@ private fun Application.configureDriverModule(
     ) {
         withContext(runTestContext) {
             test.waitForIdle()
-            onNode(test, autoRespondOkOrGif, f)
+            videoRecorder.captureFrame()
+            onNode(test, autoRespondOkOrGif, videoRecorder, f)
             test.waitForIdle()
+            videoRecorder.captureFrame()
         }
     }
 
@@ -263,6 +267,42 @@ private fun Application.configureDriverModule(
             onNode { it.performTouchInput { moveTo(call.pointerId(), call.offset()) } }
         }
         get("/pointerInput/up") { onNode { it.performTouchInput { up(call.pointerId()) } } }
+
+        get("/startRecording") {
+            if (videoRecorder.isRecording) {
+                call.respondText(
+                    "Recording already in progress",
+                    status = HttpStatusCode.Conflict,
+                )
+                return@get
+            }
+            val format = VideoFormat.fromString(call.optionalParam("format") ?: "mp4")
+            val fps = call.optionalParam("fps")?.toInt() ?: 30
+            val matcher = call.node()
+            withContext(runTestContext) {
+                val target = matcher?.let { test.onNode(it) }
+                videoRecorder.start(test, format, fps, target)
+            }
+            ok()
+        }
+        get("/stopRecording") {
+            if (!videoRecorder.isRecording) {
+                call.respondText(
+                    "No recording in progress",
+                    status = HttpStatusCode.BadRequest,
+                )
+                return@get
+            }
+            val result = withContext(runTestContext) {
+                videoRecorder.captureFrame()
+                videoRecorder.stop()
+            }
+            try {
+                call.respondStream(result.contentType) { Files.copy(result.file, this) }
+            } finally {
+                result.cleanup()
+            }
+        }
     }
 }
 
@@ -335,22 +375,36 @@ internal fun keyByName(name: String): Key {
 private suspend fun RoutingContext.onNode(
     test: ComposeUiTest,
     autoRespondOkOrGif: Boolean,
+    videoRecorder: VideoRecorder,
     f: suspend ComposeUiTest.(SemanticsNodeInteraction) -> Unit,
 ) {
     val gifDurationMs = call.optionalParam("gifDurationMs")?.toInt()
+    val videoDurationMs = call.optionalParam("videoDurationMs")?.toInt()
+    val videoFormat = call.optionalParam("videoFormat")?.let { VideoFormat.fromString(it) }
+        ?: VideoFormat.MP4
     val matcher = call.node()
 
-    if (gifDurationMs == null || !autoRespondOkOrGif) {
+    // During session recording, inline GIF/video params are ignored — just run the action.
+    val isSessionRecording = videoRecorder.isRecording
+    val hasInlineMedia = (gifDurationMs != null || videoDurationMs != null) && !isSessionRecording
+
+    if (!hasInlineMedia || !autoRespondOkOrGif) {
         test.f(test.resolveNode(matcher))
         if (autoRespondOkOrGif) ok()
         return
     }
 
-    require(gifDurationMs in 0..5_000) { "gifDurationMs should be <= 5_000 and >= 0" }
-
-    val timeBetweenFramesMs = 16L
-    val frames = generateFrames(test, gifDurationMs, timeBetweenFramesMs, matcher, f)
-    respondGif(frames, timeBetweenFramesMs)
+    if (gifDurationMs != null) {
+        require(gifDurationMs in 0..5_000) { "gifDurationMs should be <= 5_000 and >= 0" }
+        val timeBetweenFramesMs = 16L
+        val frames = generateFrames(test, gifDurationMs, timeBetweenFramesMs, matcher, f)
+        respondGif(frames, timeBetweenFramesMs)
+    } else if (videoDurationMs != null) {
+        require(videoDurationMs >= 0) { "videoDurationMs should be >= 0" }
+        val timeBetweenFramesMs = 16L
+        val frames = generateFrames(test, videoDurationMs, timeBetweenFramesMs, matcher, f)
+        respondVideo(frames, timeBetweenFramesMs, videoFormat)
+    }
 }
 
 /**
@@ -364,7 +418,7 @@ private fun ComposeUiTest.resolveNode(matcher: SemanticsMatcher?): SemanticsNode
 
 private suspend fun RoutingContext.generateFrames(
     test: ComposeUiTest,
-    gifDurationMs: Int,
+    durationMs: Int,
     timeBetweenFrames: Long,
     matcher: SemanticsMatcher?,
     f: suspend ComposeUiTest.(SemanticsNodeInteraction) -> Unit,
@@ -381,7 +435,7 @@ private suspend fun RoutingContext.generateFrames(
         test.f(test.resolveNode(matcher))
 
         var t = 0L
-        while (t <= gifDurationMs) {
+        while (t <= durationMs) {
             screenshotFrame()
             test.mainClock.advanceTimeBy(timeBetweenFrames)
             t += timeBetweenFrames

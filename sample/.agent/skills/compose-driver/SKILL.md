@@ -55,6 +55,9 @@ These parameters can be used on all endpoints, applying the operation to the mat
   provided, the action applies to the **root** node.
 * `gifDurationMs` (Optional): If provided (max 5000ms), the server records the interaction and
   returns a GIF instead of a text response. Requires `ffmpeg`.
+* `videoDurationMs` (Optional): If provided, records the interaction as a video and returns it.
+  No duration limit. Requires `ffmpeg`.
+* `videoFormat` (Optional): `mp4` (default) or `webm`. Used with `videoDurationMs`.
 
 ### 1. Observation (Seeing the UI)
 
@@ -121,7 +124,38 @@ GET /keyEvent?key=ShiftLeft&action=up
 | **Pointer Move** | `/pointerInput/moveTo` | `x`, `y` (req), `pointerId` | Moves the pointer to absolute coordinates. |
 | **Pointer Up**   | `/pointerInput/up`     | `pointerId`                 | Releases the pointer.                      |
 
-### 5. Lifecycle
+### 5. Video Recording
+
+Session-based recording captures frames across multiple actions. Frames are captured before and
+after each action endpoint while recording is active.
+
+| Action | Endpoint | Parameters | Description |
+|:---|:---|:---|:---|
+| **Start Recording** | `/startRecording` | `format` (opt, def: `mp4`), `fps` (opt, def: 30), node selection params | Start recording. Returns 409 if already recording. |
+| **Stop Recording** | `/stopRecording` | | Stop recording and return the video file. Returns 400 if not recording. |
+
+Node selection parameters (`nodeTag`, `nodeText`, etc.) can be passed to `/startRecording` to
+record a specific composable instead of the full screen. The target's dimensions must remain stable
+for the duration of the recording.
+
+During session recording, inline `gifDurationMs` and `videoDurationMs` parameters on action
+endpoints are ignored — actions execute normally and the session recorder captures frames around
+them.
+
+**Examples:**
+
+```
+GET /startRecording?format=mp4&fps=30
+GET /click?nodeTag=button
+GET /textInput?nodeTag=field&text=hello
+GET /stopRecording -> returns video file
+
+GET /startRecording?format=webm&nodeTag=animation_area
+GET /click?nodeTag=play_button
+GET /stopRecording -> returns video of just the animation_area component
+```
+
+### 6. Lifecycle
 
 | Action       | Endpoint | Parameters         | Description                                                                                        |
 |:-------------|:---------|:-------------------|:---------------------------------------------------------------------------------------------------|
@@ -144,6 +178,17 @@ GET /keyEvent?key=ShiftLeft&action=up
 
 1. **Record:** `GET /click?nodeTag=animate_btn&gifDurationMs=1000`
     * *Result:* Returns a GIF file showing the click and the subsequent 1 second of animation.
+2. **Or as video:** `GET /click?nodeTag=animate_btn&videoDurationMs=2000&videoFormat=mp4`
+    * *Result:* Returns an MP4 video of the click and 2 seconds of animation.
+
+**Scenario: Recording a Multi-Step Flow**
+
+1. **Start:** `GET /startRecording?format=mp4`
+2. **Act:**
+    * `GET /textInput?nodeTag=search_field&text=compose`
+    * `GET /click?nodeText=Search`
+    * `GET /waitForNode?nodeTag=results_list`
+3. **Stop:** `GET /stopRecording` -> Returns an MP4 video of the entire flow.
 
 **Scenario: Interacting with Off-Screen List Items**
 
