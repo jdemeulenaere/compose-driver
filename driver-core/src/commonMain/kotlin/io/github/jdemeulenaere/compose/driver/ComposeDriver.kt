@@ -28,6 +28,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.withKeysDown
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
@@ -218,9 +219,19 @@ private fun Application.configureDriverModule(
             onNode { node ->
                 val key = keyByName(call.requiredParam("key"))
                 val action = (call.optionalParam("action") ?: "press").lowercase()
+                val modifiers = call.optionalParam("modifiers")
+                    ?.split(",")
+                    ?.map { keyByName(it.trim()) }
+                    ?: emptyList()
                 node.performKeyInput {
                     when (action) {
-                        "press" -> pressKey(key)
+                        "press" -> {
+                            if (modifiers.isEmpty()) {
+                                pressKey(key)
+                            } else {
+                                withKeysDown(modifiers) { pressKey(key) }
+                            }
+                        }
                         "down" -> keyDown(key)
                         "up" -> keyUp(key)
                         else -> throw IllegalArgumentException("Unknown action '$action'. Use 'press', 'down', or 'up'.")
@@ -303,7 +314,7 @@ private fun ApplicationCall.pointerId(): Int {
     return optionalParam("pointerId")?.toInt() ?: 0
 }
 
-private fun keyByName(name: String): Key {
+internal fun keyByName(name: String): Key {
     val companionClass = Key.Companion::class.java
     val prefix = "get${name.replaceFirstChar { it.uppercase() }}"
     // Key is an inline value class, so JVM getter names are mangled with a hash suffix
