@@ -3,11 +3,14 @@ package io.github.jdemeulenaere.compose.driver.sample.multiplatform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -71,6 +74,31 @@ fun MultiplatformApplication(name: String) {
                                 .animateBounds(lookaheadScope = this@LookaheadScope),
                         ) {
                             Text("Counter: $counter")
+                        }
+
+                        var showDropdown by remember { mutableStateOf(false) }
+                        Box {
+                            Button(
+                                onClick = { showDropdown = !showDropdown },
+                                Modifier.testTag("dropdownToggle"),
+                            ) {
+                                Text("Toggle Dropdown")
+                            }
+                            DropdownMenu(
+                                expanded = showDropdown,
+                                onDismissRequest = { showDropdown = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Option 1") },
+                                    onClick = { showDropdown = false },
+                                    modifier = Modifier.testTag("dropdownOption1"),
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Option 2") },
+                                    onClick = { showDropdown = false },
+                                    modifier = Modifier.testTag("dropdownOption2"),
+                                )
+                            }
                         }
                     }
                 }
