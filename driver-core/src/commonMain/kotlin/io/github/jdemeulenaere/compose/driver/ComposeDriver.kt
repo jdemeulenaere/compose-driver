@@ -18,9 +18,8 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.isRoot as isRootMatcher
 import androidx.compose.ui.test.longClick
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
@@ -29,6 +28,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.withKeysDown
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
@@ -182,12 +182,24 @@ private fun Application.configureDriverModule(
             }
         }
         get("/printTree") {
-            onNode(autoRespondOkOrGif = false) { call.respondText(it.printToString()) }
+            val matcher = call.node()
+            if (matcher != null) {
+                onNode(autoRespondOkOrGif = false) { call.respondText(it.printToString()) }
+            } else {
+                // Print all root nodes (handles popups which create additional roots).
+                withContext(runTestContext) {
+                    test.waitForIdle()
+                    val allRoots = test.onAllNodes(isRootMatcher())
+                    call.respondText(allRoots.printToString(maxDepth = Int.MAX_VALUE))
+                    test.waitForIdle()
+                }
+            }
         }
         get("/waitForIdle") { onNode {} }
         get("/waitForNode") {
             val timeout = call.optionalParam("timeout")?.toLong() ?: 5_000L
-            onNode { waitUntilAtLeastOneExists(call.node(), timeout) }
+            val matcher = call.node() ?: isRootMatcher()
+            onNode { waitUntilAtLeastOneExists(matcher, timeout) }
         }
         get("/click") { onNode { it.performClick() } }
         get("/longClick") { onNode { it.performTouchInput { longClick() } } }
@@ -207,9 +219,19 @@ private fun Application.configureDriverModule(
             onNode { node ->
                 val key = keyByName(call.requiredParam("key"))
                 val action = (call.optionalParam("action") ?: "press").lowercase()
+                val modifiers = call.optionalParam("modifiers")
+                    ?.split(",")
+                    ?.map { keyByName(it.trim()) }
+                    ?: emptyList()
                 node.performKeyInput {
                     when (action) {
-                        "press" -> pressKey(key)
+                        "press" -> {
+                            if (modifiers.isEmpty()) {
+                                pressKey(key)
+                            } else {
+                                withKeysDown(modifiers) { pressKey(key) }
+                            }
+                        }
                         "down" -> keyDown(key)
                         "up" -> keyUp(key)
                         else -> throw IllegalArgumentException("Unknown action '$action'. Use 'press', 'down', or 'up'.")
@@ -248,7 +270,11 @@ private suspend fun RoutingContext.ok() {
     call.respondText("ok")
 }
 
-private fun ApplicationCall.node(): SemanticsMatcher {
+/**
+ * Builds a [SemanticsMatcher] from the node-selection query parameters (`nodeTag`, `nodeText`,
+ * etc.). Returns `null` when no selector is provided, meaning "target the root(s)".
+ */
+private fun ApplicationCall.node(): SemanticsMatcher? {
     val nodeTag = optionalParam("nodeTag")
     val nodeText = optionalParam("nodeText")
     val nodeTextSubstring = optionalParam("nodeTextSubstring")?.toBoolean() ?: false
@@ -264,7 +290,7 @@ private fun ApplicationCall.node(): SemanticsMatcher {
         tagMatcher != null && textMatcher != null -> tagMatcher and textMatcher
         tagMatcher != null -> tagMatcher
         textMatcher != null -> textMatcher
-        else -> isRoot()
+        else -> null
     }
 }
 
@@ -288,7 +314,7 @@ private fun ApplicationCall.pointerId(): Int {
     return optionalParam("pointerId")?.toInt() ?: 0
 }
 
-private fun keyByName(name: String): Key {
+internal fun keyByName(name: String): Key {
     val companionClass = Key.Companion::class.java
     val prefix = "get${name.replaceFirstChar { it.uppercase() }}"
     // Key is an inline value class, so JVM getter names are mangled with a hash suffix
@@ -312,9 +338,10 @@ private suspend fun RoutingContext.onNode(
     f: suspend ComposeUiTest.(SemanticsNodeInteraction) -> Unit,
 ) {
     val gifDurationMs = call.optionalParam("gifDurationMs")?.toInt()
+    val matcher = call.node()
 
     if (gifDurationMs == null || !autoRespondOkOrGif) {
-        test.f(test.onNode(call.node()))
+        test.f(test.resolveNode(matcher))
         if (autoRespondOkOrGif) ok()
         return
     }
@@ -322,26 +349,36 @@ private suspend fun RoutingContext.onNode(
     require(gifDurationMs in 0..5_000) { "gifDurationMs should be <= 5_000 and >= 0" }
 
     val timeBetweenFramesMs = 16L
-    val frames = generateFrames(test, gifDurationMs, timeBetweenFramesMs, f)
+    val frames = generateFrames(test, gifDurationMs, timeBetweenFramesMs, matcher, f)
     respondGif(frames, timeBetweenFramesMs)
+}
+
+/**
+ * Resolves a single [SemanticsNodeInteraction]. When [matcher] is non-null, uses
+ * [ComposeUiTest.onNode] (which searches across all roots). When [matcher] is null (no selector
+ * provided), targets the first root — safe even when popups add extra roots.
+ */
+private fun ComposeUiTest.resolveNode(matcher: SemanticsMatcher?): SemanticsNodeInteraction {
+    return if (matcher != null) onNode(matcher) else onAllNodes(isRootMatcher())[0]
 }
 
 private suspend fun RoutingContext.generateFrames(
     test: ComposeUiTest,
     gifDurationMs: Int,
     timeBetweenFrames: Long,
+    matcher: SemanticsMatcher?,
     f: suspend ComposeUiTest.(SemanticsNodeInteraction) -> Unit,
 ): List<ImageBitmap> {
     val frames = mutableListOf<ImageBitmap>()
 
     fun screenshotFrame() {
         test.waitForIdle()
-        frames += test.onRoot().captureToImage()
+        frames += test.resolveNode(null).captureToImage()
     }
 
     try {
         test.mainClock.autoAdvance = false
-        test.f(test.onNode(call.node()))
+        test.f(test.resolveNode(matcher))
 
         var t = 0L
         while (t <= gifDurationMs) {

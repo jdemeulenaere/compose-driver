@@ -29,6 +29,13 @@ kotlin {
                 implementation(libs.ktor.server.status.pages)
             }
         }
+        jvmTest {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(compose.foundation)
+                runtimeOnly(compose.desktop.currentOs)
+            }
+        }
     }
 }
 
