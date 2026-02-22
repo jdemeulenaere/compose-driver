@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
@@ -21,11 +22,13 @@ import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
@@ -200,6 +203,20 @@ private fun Application.configureDriverModule(
             }
         }
         get("/scrollTo") { onNode { it.performScrollTo() } }
+        get("/keyEvent") {
+            onNode { node ->
+                val key = keyByName(call.requiredParam("key"))
+                val action = (call.optionalParam("action") ?: "press").lowercase()
+                node.performKeyInput {
+                    when (action) {
+                        "press" -> pressKey(key)
+                        "down" -> keyDown(key)
+                        "up" -> keyUp(key)
+                        else -> throw IllegalArgumentException("Unknown action '$action'. Use 'press', 'down', or 'up'.")
+                    }
+                }
+            }
+        }
         get("/swipe") {
             onNode { node ->
                 node.performTouchInput {
@@ -269,6 +286,24 @@ private fun ApplicationCall.offset(): Offset {
 
 private fun ApplicationCall.pointerId(): Int {
     return optionalParam("pointerId")?.toInt() ?: 0
+}
+
+private fun keyByName(name: String): Key {
+    val companionClass = Key.Companion::class.java
+    val prefix = "get${name.replaceFirstChar { it.uppercase() }}"
+    // Key is an inline value class, so JVM getter names are mangled with a hash suffix
+    // (e.g. "getA-xxxx" instead of "getA"). Match by prefix, then require the next char
+    // to be '-' (the mangling separator) to avoid false matches like "getA" -> "getApostrophe".
+    val getter = companionClass.declaredMethods.firstOrNull {
+        it.name.startsWith(prefix) &&
+            it.parameterCount == 0 &&
+            (it.name.length == prefix.length || it.name[prefix.length] == '-')
+    } ?: throw IllegalArgumentException(
+        "Unknown key: '$name'. Use a property name from androidx.compose.ui.input.key.Key " +
+            "(e.g. 'A', 'Enter', 'DirectionUp')."
+    )
+    val keyCode = getter.invoke(Key.Companion) as Long
+    return Key(keyCode)
 }
 
 private suspend fun RoutingContext.onNode(
