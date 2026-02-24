@@ -170,10 +170,67 @@ curl "http://localhost:8080/click?nodeText=login&nodeTextIgnoreCase=true&nodeTex
 
 ### GIF generation
 
-All endpoints (like `/click`, `/swipe`, etc.) also **accept an optional `gifDurationMs`
+All action endpoints (like `/click`, `/swipe`, etc.) also **accept an optional `gifDurationMs`
 parameter**. If provided, the server will record a GIF of the interaction for the specified
 duration (max 5,000 ms) and return it instead of the standard "ok" response.
 
 > [!NOTE]
-> **Note**: This feature requires `ffmpeg` to be installed on the host machine and available in the
+> GIF and video features require `ffmpeg` to be installed on the host machine and available in the
 > system PATH.
+
+### Video recording
+
+Video recording is available in two modes: **inline** (single action) and **session-based** (multi
+action).
+
+#### Inline video
+
+All action endpoints accept optional `videoDurationMs` and `videoFormat` parameters. When
+`videoDurationMs` is set, the server records the interaction using virtual clock advancement (same
+as GIF) and returns the video file. There is no duration limit.
+
+| Parameter | Description |
+|:---|:---|
+| `videoDurationMs` (opt) | Duration to record in milliseconds. No upper limit. |
+| `videoFormat` (opt) | `mp4` (default) or `webm`. |
+
+```bash
+curl "http://localhost:8080/click?nodeTag=button&videoDurationMs=2000&videoFormat=mp4" > click.mp4
+```
+
+#### Session-based recording
+
+Session recording captures frames across multiple actions. Frames are captured before and after each
+action endpoint call while recording is active.
+
+| Method | Endpoint | Params | Description |
+|:---|:---|:---|:---|
+| `GET` | `/startRecording` | `format` (opt), `fps` (opt), node selection | Start recording. Returns 409 if already recording. |
+| `GET` | `/stopRecording` | | Stop recording and return the video file. Returns 400 if not recording. |
+
+**Parameters for `/startRecording`:**
+
+| Parameter | Description |
+|:---|:---|
+| `format` (opt) | `mp4` (default) or `webm`. |
+| `fps` (opt) | Frames per second (default: 30). |
+| `nodeTag`, `nodeText`, etc. (opt) | Target a specific composable instead of the full screen. The target's dimensions must remain stable during recording. |
+
+```bash
+# Record a full interaction sequence
+curl "http://localhost:8080/startRecording?format=mp4&fps=30"
+curl "http://localhost:8080/click?nodeTag=username"
+curl "http://localhost:8080/textInput?nodeTag=username&text=hello"
+curl "http://localhost:8080/click?nodeText=Login"
+curl "http://localhost:8080/stopRecording" > session.mp4
+
+# Record only a specific component
+curl "http://localhost:8080/startRecording?format=mp4&nodeTag=animation_area"
+curl "http://localhost:8080/click?nodeTag=play_button"
+curl "http://localhost:8080/stopRecording" > animation.mp4
+```
+
+> [!NOTE]
+> During session recording, inline `gifDurationMs` and `videoDurationMs` parameters on action
+> endpoints are ignored — actions execute normally and the session recorder captures frames around
+> them.
